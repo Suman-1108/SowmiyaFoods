@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+/* Hide scrollbar for Chrome, Safari and Edge */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+/* Global text color */
+.text-default {
+  @apply text-black dark:text-amber-950;
+}
+
+/* Marquee Animation */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-33.33%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/*Bottom Snackbar Animation */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 28px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.animate-slide-up-snackbar {
+  animation: slideUpFade 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Bottom Toast Animations */
+@keyframes slideUpToast {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideDownToast {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+}
+
+.animate-toast-in {
+  animation: slideUpToast 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-toast-out {
+  animation: slideDownToast 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
