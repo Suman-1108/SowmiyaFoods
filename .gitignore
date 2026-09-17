@@ -10,8 +10,6 @@ Backend/.env
 Frontend/.env
 
 # Build outputs
-dist/
-Frontend/dist/
 build/
 
 # Logs
