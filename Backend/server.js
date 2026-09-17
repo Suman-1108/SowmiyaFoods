@@ -116,13 +116,10 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Local server listener (only when executed directly, e.g. "node server.js")
-const isDirectRun =
-  process.argv[1] &&
-  path.resolve(process.argv[1]).toLowerCase() === __filename.toLowerCase();
+// Server listener (runs in local and VPS environments like PM2, but not in Vercel serverless)
 const PORT = process.env.PORT || 5000;
 
-if (isDirectRun && !process.env.VERCEL) {
+if (!process.env.VERCEL) {
   connectDB()
     .then(async () => {
       await syncEnvAdminUser();
