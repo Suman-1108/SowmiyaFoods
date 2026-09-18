@@ -2,14 +2,31 @@ import mongoose from "mongoose";
 import Product from "./models/Product.js"; // adjust path if your Product model is in another folder
 
 
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env from Backend folder or root
+dotenv.config({ path: path.resolve(__dirname, ".env") });
+dotenv.config();
+
 // 1. Connect to MongoDB
-const MONGO_URI ="mongodb+srv://user:user@cluster0.umyfat0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log("MongoDB connected"))
-.catch((err) => console.error("MongoDB connection error:", err));
+const MONGO_URI = process.env.MONGO_URI;
+
+if (!MONGO_URI) {
+  console.error("❌ Error: MONGO_URI is not defined in .env file!");
+  process.exit(1);
+}
+
+mongoose.connect(MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1);
+  });
 
 // 2. Define products array with updated image paths and prices
 
