@@ -249,7 +249,7 @@ const Login = () => {
     try {
       const res = await axiosInstance.post("/auth/login", {
         name: passwordUser.trim(),
-        password,
+        password: password.trim(),
       });
 
       // 🔐 If backend requires 2FA OTP verification:
@@ -262,8 +262,14 @@ const Login = () => {
         setStep("otp");
         setTimer(30);
         setCanResend(false);
-        setOtpDigits(["", "", "", "", "", ""]);
-        toast.success(res.data.message || "OTP sent to your email!");
+        if (res.data.otpCode) {
+          const digits = res.data.otpCode.toString().split("").slice(0, 6);
+          setOtpDigits(digits);
+          toast.success(res.data.message || `Verification code: ${res.data.otpCode}`);
+        } else {
+          setOtpDigits(["", "", "", "", "", ""]);
+          toast.success(res.data.message || "OTP sent to your email!");
+        }
 
         setTimeout(() => {
           otpInputRefs.current[0]?.focus();

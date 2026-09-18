@@ -38,6 +38,7 @@ const AdminLogin = () => {
   const [requiresOtp, setRequiresOtp] = useState(false);
   const [otp, setOtp] = useState("");
   const [otpEmail, setOtpEmail] = useState("");
+  const [serverOtpHint, setServerOtpHint] = useState("");
   const [requireOtpOption, setRequireOtpOption] = useState(true); // Toggle between Password-only & Verification Code
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendingOtp, setResendingOtp] = useState(false);
@@ -86,7 +87,7 @@ const AdminLogin = () => {
     try {
       const res = await axiosInstance.post("/auth/login", {
         name: identifier.trim(),
-        password,
+        password: password.trim(),
         isAdminLogin: true,
         requireOtp: requireOtpOption,
       });
@@ -95,7 +96,14 @@ const AdminLogin = () => {
         setRequiresOtp(true);
         setOtpEmail(res.data.email || identifier);
         setResendCooldown(45);
-        toast.success(res.data.message || "Verification code sent to your email");
+        if (res.data.otpCode) {
+          setServerOtpHint(res.data.otpCode);
+          setOtp(res.data.otpCode);
+          toast.success(res.data.message || `Verification code: ${res.data.otpCode}`);
+        } else {
+          setServerOtpHint("");
+          toast.success(res.data.message || "Verification code sent to your email");
+        }
       } else {
         const { token, user } = res.data;
         if (!isPortalUser(user)) {
@@ -124,6 +132,10 @@ const AdminLogin = () => {
         email: otpEmail,
         identifier: otpEmail,
       });
+      if (res.data.otpCode) {
+        setServerOtpHint(res.data.otpCode);
+        setOtp(res.data.otpCode);
+      }
       toast.success(res.data.message || "Fresh verification code sent!");
       setResendCooldown(45);
     } catch (err) {
@@ -298,6 +310,21 @@ const AdminLogin = () => {
                     Enter the 6-digit code sent to <span className="text-amber-400 font-semibold">{otpEmail}</span>
                   </p>
                 </div>
+
+                {serverOtpHint && (
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-center space-y-1">
+                    <p className="text-xs font-semibold text-amber-300">
+                      Security Verification Code
+                    </p>
+                    <p className="font-mono text-xl font-black text-amber-400 tracking-[0.4em]">
+                      {serverOtpHint}
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      Auto-filled for verification. Click below to confirm.
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 text-center">
                     Verification Code
