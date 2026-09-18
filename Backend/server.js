@@ -40,6 +40,7 @@ app.use((req, res, next) => {
 const allowedOrigins = [
   "https://sowmiyafoods.com",
   "https://www.sowmiyafoods.com",
+  "https://api.sowmiyafoods.com",
   "http://134.122.120.218",
   "http://134.122.120.218:5000",
   "https://134.122.120.218",
@@ -57,6 +58,7 @@ app.use(
         allowedOrigins.includes(origin) ||
         /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) ||
         /^https?:\/\/134\.122\.120\.218(:\d+)?$/.test(origin) ||
+        /sowmiyafoods\.com$/.test(origin) ||
         /\.vercel\.app$/.test(origin)
       ) {
         callback(null, true);
