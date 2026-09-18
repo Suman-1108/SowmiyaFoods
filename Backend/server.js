@@ -53,20 +53,25 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) ||
-        /^https?:\/\/134\.122\.120\.218(:\d+)?$/.test(origin) ||
-        /sowmiyafoods\.com$/.test(origin) ||
-        /\.vercel\.app$/.test(origin)
-      ) {
+      if (!origin) return callback(null, true);
+      const cleanOrigin = origin.replace(/\/+$/, "");
+      const isAllowed =
+        allowedOrigins.includes(cleanOrigin) ||
+        cleanOrigin.includes("sowmiyafoods.com") ||
+        cleanOrigin.includes("localhost") ||
+        cleanOrigin.includes("127.0.0.1") ||
+        cleanOrigin.includes("134.122.120.218") ||
+        cleanOrigin.endsWith(".vercel.app");
+
+      if (isAllowed) {
         callback(null, true);
       } else {
-        callback(new Error("CORS not allowed for this origin: " + origin));
+        callback(null, false);
       }
     },
     credentials: true,
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   })
 );
 
