@@ -245,11 +245,7 @@ const LatestProducts = () => {
               let badge = null;
               if (isOutOfStock) {
                 badge = { text: "Out of Stock", bg: "bg-rose-600 text-white font-bold" };
-              } else if (pIdx % 5 === 0) {
-                badge = { text: "Sale", bg: "bg-[#e8703b] text-white" };
-              } else if (pIdx % 5 === 1) {
-                badge = { text: "Best Seller", bg: "bg-[#2563EB] text-white" };
-              } else if (pIdx % 5 === 2) {
+              } else {
                 badge = { text: "New", bg: "bg-[#e8703b] text-white" };
               }
 

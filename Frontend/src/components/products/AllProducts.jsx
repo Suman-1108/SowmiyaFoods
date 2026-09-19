@@ -570,19 +570,15 @@ const AllProducts = () => {
                       product.inStock === false ||
                       (product.stock !== undefined && Number(product.stock) <= 0);
 
-                    // Badge assignment
+                    // Badge assignment: only "New" product pill (Best Seller, Sale, Pure removed)
                     let badge = null;
                     if (isOutOfStock) {
                       badge = {
                         text: "Out of Stock",
                         bg: "bg-rose-600 text-white font-bold",
                       };
-                    } else if (pIdx % 4 === 0) {
-                      badge = { text: "Best Seller", bg: "bg-[#2563EB] text-white" };
-                    } else if (pIdx % 4 === 1) {
-                      badge = { text: "Sale", bg: "bg-[#e8703b] text-white" };
-                    } else if (pIdx % 4 === 2) {
-                      badge = { text: "Pure & Fresh", bg: "bg-emerald-600 text-white" };
+                    } else {
+                      badge = { text: "New", bg: "bg-[#e8703b] text-white" };
                     }
 
                     return (

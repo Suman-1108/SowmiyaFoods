@@ -514,10 +514,16 @@ const ProductDetails = () => {
                   <span className="w-2.5 h-2.5 bg-emerald-600 rounded-full"></span>
                 </div>
 
-                {/* Best Seller Pill (Blue as requested) */}
-                <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-[#2563EB] text-white shadow-2xs">
-                  Best Seller
-                </span>
+                {/* New Product Pill */}
+                {isOutOfStock ? (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-rose-600 text-white shadow-2xs">
+                    Out of Stock
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-[#e8703b] text-white shadow-2xs">
+                    New
+                  </span>
+                )}
               </div>
 
               {/* Top-Right: Wishlist Heart & Share */}
@@ -1216,13 +1222,15 @@ const ProductDetails = () => {
                 const relMrp = Math.round(relPrice * 1.3) || relPrice + 35;
                 const relReviewCount = 70 + ((rIdx * 23) % 80);
 
-                // Badge assignment
+                // Badge assignment - only "New" (Best Seller & Sale removed)
                 let relBadge = null;
-                if (rIdx % 4 === 0) {
-                  relBadge = { text: "Best Seller", bg: "bg-[#2563EB] text-white" };
-                } else if (rIdx % 4 === 1) {
-                  relBadge = { text: "Sale", bg: "bg-[#e8703b] text-white" };
-                } else if (rIdx % 4 === 2) {
+                const isRelOutOfStock =
+                  relProduct.inStock === false ||
+                  (relProduct.stock !== undefined && Number(relProduct.stock) <= 0);
+
+                if (isRelOutOfStock) {
+                  relBadge = { text: "Out of Stock", bg: "bg-rose-600 text-white font-bold" };
+                } else {
                   relBadge = { text: "New", bg: "bg-[#e8703b] text-white" };
                 }
 

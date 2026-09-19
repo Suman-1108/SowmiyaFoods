@@ -41,6 +41,7 @@ const Login = () => {
   const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [serverOtpHint, setServerOtpHint] = useState("");
 
   const otpInputRefs = useRef([]);
 
@@ -115,12 +116,20 @@ const Login = () => {
         type: authType,
       });
 
-      toast.success(res.data.message || "OTP sent successfully!");
-
       setStep("otp");
       setTimer(30);
       setCanResend(false);
-      setOtpDigits(["", "", "", "", "", ""]);
+
+      if (res.data.otpCode) {
+        const digits = res.data.otpCode.toString().split("").slice(0, 6);
+        setOtpDigits(digits);
+        setServerOtpHint(res.data.otpCode);
+        toast.success(res.data.message || `Verification code: ${res.data.otpCode}`);
+      } else {
+        setOtpDigits(["", "", "", "", "", ""]);
+        setServerOtpHint("");
+        toast.success(res.data.message || "OTP sent successfully!");
+      }
 
       // Focus first OTP input
       setTimeout(() => {
@@ -147,10 +156,19 @@ const Login = () => {
           identifier: email,
           type: "email",
         });
-        toast.success(res.data.message || "OTP resent successfully to your email!");
         setTimer(30);
         setCanResend(false);
-        setOtpDigits(["", "", "", "", "", ""]);
+
+        if (res.data.otpCode) {
+          const digits = res.data.otpCode.toString().split("").slice(0, 6);
+          setOtpDigits(digits);
+          setServerOtpHint(res.data.otpCode);
+          toast.success(res.data.message || `Verification code: ${res.data.otpCode}`);
+        } else {
+          setOtpDigits(["", "", "", "", "", ""]);
+          setServerOtpHint("");
+          toast.success(res.data.message || "OTP resent successfully to your email!");
+        }
       } catch (err) {
         console.error(err);
         const msg = err.response?.data?.message || "Failed to resend OTP.";
@@ -517,6 +535,20 @@ const Login = () => {
                           {authType === "phone" ? `+91 ${phone}` : email}
                         </strong>
                       </p>
+
+                      {serverOtpHint && (
+                        <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-center space-y-1">
+                          <p className="text-xs font-semibold text-amber-700">
+                            Security Verification Code
+                          </p>
+                          <p className="font-mono text-xl font-black text-amber-600 tracking-[0.4em]">
+                            {serverOtpHint}
+                          </p>
+                          <p className="text-[10px] text-gray-500">
+                            Auto-filled for quick verification. Click continue below.
+                          </p>
+                        </div>
+                      )}
 
 
                       {errorMessage && (
