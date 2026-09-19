@@ -924,20 +924,43 @@ router.post("/admin/staff", protectAdmin, async (req, res) => {
     const cleanEmail = email.toLowerCase().trim();
     const cleanName = name.trim();
 
-    const existing = await User.findOne({
-      $or: [{ email: cleanEmail }, { name: cleanName }],
-    });
-
-    if (existing) {
-      return res.status(400).json({ message: "A user with this email or name already exists." });
-    }
-
     let finalPermissions = permissions;
     if (!finalPermissions || !Array.isArray(finalPermissions) || finalPermissions.length === 0) {
       finalPermissions = ROLE_DEFINITIONS[role]?.permissions || [];
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Check if user already exists
+    const existing = await User.findOne({ email: cleanEmail });
+
+    if (existing) {
+      const isAlreadyStaff =
+        existing.isAdmin ||
+        ["admin", "manager", "order_manager", "catalog_specialist", "viewer", "custom"].includes(existing.role);
+
+      if (isAlreadyStaff) {
+        return res.status(400).json({ message: "A staff member with this email is already on the team." });
+      }
+
+      // Existing customer account is being added to the staff: promote them!
+      existing.name = cleanName;
+      if (phone) existing.phone = phone.trim();
+      existing.password = hashedPassword;
+      existing.isAdmin = role === "admin";
+      existing.role = role;
+      existing.permissions = finalPermissions;
+      existing.isActive = true;
+      existing.assignedBy = req.user.id;
+
+      await existing.save();
+
+      return res.status(201).json({
+        success: true,
+        message: `${existing.name} added to staff as ${ROLE_DEFINITIONS[role]?.name || role}!`,
+        staff: formatUserResponse(existing),
+      });
+    }
 
     const newStaff = new User({
       name: cleanName,
@@ -961,7 +984,7 @@ router.post("/admin/staff", protectAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating staff:", error);
-    res.status(500).json({ message: "Failed to create staff member." });
+    res.status(500).json({ message: error.message || "Failed to create staff member." });
   }
 });
 
@@ -992,7 +1015,15 @@ router.put("/admin/staff/:id", protectAdmin, async (req, res) => {
       if (cleanEmail !== staff.email) {
         const emailExists = await User.findOne({ email: cleanEmail, _id: { $ne: id } });
         if (emailExists) {
-          return res.status(400).json({ message: "This email is already in use by another user." });
+          const isOtherStaff =
+            emailExists.isAdmin ||
+            ["admin", "manager", "order_manager", "catalog_specialist", "viewer", "custom"].includes(emailExists.role);
+
+          if (isOtherStaff) {
+            return res.status(400).json({ message: "This email is already in use by another staff member." });
+          }
+          // The conflicting account is only an unprivileged customer account. Delete the placeholder so staff can use it.
+          await User.deleteOne({ _id: emailExists._id });
         }
         staff.email = cleanEmail;
       }
