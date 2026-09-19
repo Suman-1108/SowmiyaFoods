@@ -32,6 +32,10 @@ const connectDB = async () => {
 
   try {
     cached.conn = await cached.promise;
+    // Ensure obsolete unique index on name is cleaned up in the background
+    if (mongoose.connection?.readyState === 1) {
+      mongoose.connection.db?.collection("users")?.dropIndex("name_1").catch(() => {});
+    }
   } catch (error) {
     cached.promise = null;
     console.error(`MongoDB Connection Error: ${error.message}`);

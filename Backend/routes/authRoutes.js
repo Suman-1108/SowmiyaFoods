@@ -286,26 +286,26 @@ router.post("/verify-otp", async (req, res) => {
       return res.status(400).json({ message: "OTP has expired. Please request a new one." });
     }
 
-    // OTP is valid; remove it so it cannot be re-used
-    await OTP.deleteOne({ _id: otpRecord._id });
-
     // Determine type
     const isEmail = cleanIdentifier.includes("@");
 
-    // Find existing user by phone, email, or name
+    // Find existing user by email or phone
     let user = await User.findOne({
       $or: [
         isEmail ? { email: cleanIdentifier.toLowerCase() } : { phone: cleanIdentifier },
-        { name: cleanIdentifier },
-        { email: cleanIdentifier },
+        isEmail ? { email: cleanIdentifier } : { phone: cleanIdentifier.replace(/\D/g, "") },
       ],
     });
 
     if (!user) {
       // Create new user automatically (seamless registration)
-      const defaultName =
+      let defaultName =
         name?.trim() ||
         (isEmail ? cleanIdentifier.split("@")[0] : `User_${cleanIdentifier.slice(-4)}`);
+
+      if (!defaultName) {
+        defaultName = `User_${Date.now().toString().slice(-4)}`;
+      }
 
       user = new User({
         name: defaultName,
@@ -314,7 +314,17 @@ router.post("/verify-otp", async (req, res) => {
         isAdmin: false,
       });
 
-      await user.save();
+      try {
+        await user.save();
+      } catch (saveErr) {
+        // Fallback in case of duplicate name conflict
+        if (saveErr.code === 11000) {
+          user.name = `${defaultName}_${Math.floor(1000 + Math.random() * 9000)}`;
+          await user.save();
+        } else {
+          throw saveErr;
+        }
+      }
     } else {
       // Update phone or email if not set
       let updated = false;
@@ -334,6 +344,9 @@ router.post("/verify-otp", async (req, res) => {
       }
     }
 
+    // OTP verified successfully; now remove it
+    await OTP.deleteOne({ _id: otpRecord._id });
+
     // Generate JWT token with RBAC
     const token = generateToken(user);
 
@@ -345,7 +358,7 @@ router.post("/verify-otp", async (req, res) => {
     });
   } catch (error) {
     console.error("Error in /verify-otp:", error);
-    res.status(500).json({ success: false, message: "Server error during OTP verification" });
+    res.status(500).json({ success: false, message: error.message || "Server error during OTP verification" });
   }
 });
 
@@ -356,14 +369,13 @@ router.post("/signup", async (req, res) => {
 
     const existingUser = await User.findOne({
       $or: [
-        { name },
         ...(email ? [{ email: email.toLowerCase() }] : []),
         ...(phone ? [{ phone }] : []),
       ],
     });
 
     if (existingUser) {
-      return res.status(400).json({ message: "An account with these details already exists" });
+      return res.status(400).json({ message: "An account with this email or phone already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
