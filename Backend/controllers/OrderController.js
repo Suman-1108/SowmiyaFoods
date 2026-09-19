@@ -1,6 +1,7 @@
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import nodemailer from "nodemailer";
+import { getSmtpTransporter, getFromAddress } from "../config/mailer.js";
 
 const LOGO_URL = process.env.LOGO_URL || "https://sowmiyafoods.com/logo.png";
 
@@ -487,18 +488,13 @@ const generateOrderEmailHtml = ({ order, address, isAdmin = false }) => {
 // =======================
 export const sendOrderEmailToAdmin = async ({ order, address }) => {
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    const transporter = getSmtpTransporter();
+    const fromAddress = getFromAddress();
 
     const emailHtml = generateOrderEmailHtml({ order, address, isAdmin: true });
 
     await transporter.sendMail({
-      from: `"Sowmiya Foods" <${process.env.EMAIL_USER}>`,
+      from: fromAddress,
       to: process.env.ADMIN_EMAIL,
       subject: `🔔 New Order Received - ${order.orderId} (₹${order.totalAmount})`,
       html: emailHtml,
@@ -515,18 +511,13 @@ export const sendOrderEmailToAdmin = async ({ order, address }) => {
 // =======================
 export const sendOrderEmailToCustomer = async ({ order, address, email }) => {
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    const transporter = getSmtpTransporter();
+    const fromAddress = getFromAddress();
 
     const emailHtml = generateOrderEmailHtml({ order, address, isAdmin: false });
 
     await transporter.sendMail({
-      from: `"Sowmiya Foods" <${process.env.EMAIL_USER}>`,
+      from: fromAddress,
       to: email,
       subject: `Order Confirmation: ${order.orderId} | Sowmiya Foods`,
       html: emailHtml,

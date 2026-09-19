@@ -7,8 +7,8 @@ import Address from "../models/Address.js";
 import OTP from "../models/OTP.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { Resend } from "resend";
 import nodemailer from "nodemailer";
+import { getSmtpTransporter, getFromAddress } from "../config/mailer.js";
 import { protectAdmin, requirePermission, protectStaff } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -125,39 +125,7 @@ export const formatUserResponse = (user) => ({
   createdAt: user.createdAt,
 });
 
-const getResend = () => new Resend(process.env.RESEND_API_KEY);
-
-// 📬 Gmail SMTP Transporter Helpers
-// Try port 465 (SSL) first, fallback to port 587 (TLS)
-const createGmailTransporter = (secure = true) => {
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: secure ? 465 : 587,
-    secure: secure,
-    connectionTimeout: 2500,
-    greetingTimeout: 2500,
-    socketTimeout: 3000,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: (process.env.EMAIL_PASS || "").replace(/\s+/g, ""),
-    },
-  });
-};
-
-const gmailTransporter = createGmailTransporter(false);
-
-// 🔍 Test Gmail SMTP connection on initialization (non-blocking)
-if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-  gmailTransporter.verify()
-    .then(() => {
-      console.log("✅ Gmail SMTP connection successful");
-    })
-    .catch((error) => {
-      console.warn("⚠️ Gmail SMTP connection check:", error.message || error);
-    });
-}
-
-// 📧 Reusable Helper to send OTP email (Gmail SMTP primary, Resend fallback)
+// 📧 Reusable Helper to send OTP email via SMTP
 async function sendEmailOTP({ targetEmail, otp, title = "Verification Code", subject = null }) {
   const emailSubject = subject || `${otp} is your verification code for Sowmiya Foods`;
   const emailHtml = `
@@ -179,92 +147,27 @@ async function sendEmailOTP({ targetEmail, otp, title = "Verification Code", sub
     </div>
   `;
 
-  // 1. Primary: Use Gmail SMTP (Nodemailer) if configured
-  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-    // Attempt SSL (Port 465) first
-    try {
-      const transporter465 = createGmailTransporter(true);
-      await transporter465.sendMail({
-        from: `"Sowmiya Foods" <${process.env.EMAIL_USER}>`,
-        to: targetEmail,
-        subject: emailSubject,
-        html: emailHtml,
-      });
-
-      console.log(`📧 [GMAIL SMTP 465] Verification code successfully sent to ${targetEmail}`);
-      return { success: true };
-    } catch (smtpErr465) {
-      console.warn("⚠️ Gmail SMTP (port 465) failed:", smtpErr465.message || smtpErr465);
-
-      // Attempt TLS (Port 587) fallback
-      try {
-        await gmailTransporter.sendMail({
-          from: `"Sowmiya Foods" <${process.env.EMAIL_USER}>`,
-          to: targetEmail,
-          subject: emailSubject,
-          html: emailHtml,
-        });
-
-        console.log(`📧 [GMAIL SMTP 587] Verification code successfully sent to ${targetEmail}`);
-        return { success: true };
-      } catch (smtpErr587) {
-        console.warn("⚠️ Gmail SMTP (port 587) failed:", smtpErr587.message || smtpErr587);
-        if (!process.env.RESEND_API_KEY) {
-          return { success: false, error: smtpErr587.message || "Failed to send email via Gmail SMTP" };
-        }
-        console.log("  Attempting fallback to Resend API...");
-      }
-    }
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    return { success: false, error: "SMTP credentials not configured (EMAIL_USER / EMAIL_PASS missing)" };
   }
 
-  // 2. Fallback / Alternative: Use Resend API if RESEND_API_KEY exists
-  if (process.env.RESEND_API_KEY) {
-    try {
-      const resend = getResend();
-      let fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
-      if (fromEmail.includes("@gmail.com") || fromEmail.includes("@yahoo.com")) {
-        fromEmail = "onboarding@resend.dev";
-      }
-      const formattedFrom = fromEmail.includes("<")
-        ? fromEmail
-        : `Sowmiya Foods <${fromEmail}>`;
+  try {
+    const transporter = getSmtpTransporter();
+    const fromAddress = getFromAddress();
 
-      const { data, error } = await resend.emails.send({
-        from: formattedFrom,
-        to: [targetEmail],
-        subject: emailSubject,
-        html: emailHtml,
-      });
+    const info = await transporter.sendMail({
+      from: fromAddress,
+      to: targetEmail,
+      subject: emailSubject,
+      html: emailHtml,
+    });
 
-      if (error) {
-        console.error("❌ Resend failed:", error);
-
-        // Resend Sandbox Restriction Notice
-        const isTestingRecipientRestriction =
-          error.statusCode === 403 &&
-          error.message?.toLowerCase().includes("only send testing emails");
-
-        if (isTestingRecipientRestriction) {
-          console.log("\n⚠️ [RESEND SANDBOX NOTICE]");
-          console.log(`  Resend sandbox only delivers emails to your registered Resend email (${process.env.RESEND_FROM_EMAIL || "hellosuman29@gmail.com"}).`);
-          console.log(`  Target "${targetEmail}" is blocked by Resend free tier.`);
-          console.log(`  👉 To send to any recipient in production, verify your domain at https://resend.com/domains.`);
-          console.log(`  👉 For local development right now, use the OTP: >>> ${otp} <<<\n`);
-          return { success: true, sandboxWarning: true, otp };
-        }
-
-        return { success: false, error: error.message || "Unable to send OTP email" };
-      }
-
-      console.log("✅ Resend email ID:", data?.id);
-      return { success: true, emailId: data?.id };
-    } catch (mailErr) {
-      console.error("❌ Resend exception sending OTP:", mailErr);
-      return { success: false, error: mailErr?.message || "Unable to send OTP email" };
-    }
+    console.log(`📧 [SMTP] Verification code successfully sent to ${targetEmail} (messageId: ${info.messageId})`);
+    return { success: true, messageId: info.messageId };
+  } catch (smtpErr) {
+    console.error("❌ SMTP sendMail failed:", smtpErr.message || smtpErr);
+    return { success: false, error: smtpErr.message || "Failed to send email via SMTP" };
   }
-
-  return { success: false, error: "Host SMTP ports blocked and no RESEND_API_KEY configured" };
 }
 
 // 📲 Send OTP Route (Phone or Email)
