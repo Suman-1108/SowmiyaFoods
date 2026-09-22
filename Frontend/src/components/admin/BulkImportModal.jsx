@@ -22,6 +22,17 @@ import toast from "react-hot-toast";
 import { bulkImportProducts } from "../../api/productApi";
 
 const DEFAULT_CATEGORIES = [
+  "Millet",
+  "Instant Products",
+  "Noodles",
+  "Semiya",
+  "Flour Items",
+  "Rava Sooji",
+  "Pickles",
+  "Thokku",
+  "Traditional Mix",
+  "Appalam",
+  // Legacy categories
   "FLOUR",
   "NOODLES",
   "RAVA",

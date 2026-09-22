@@ -8,115 +8,212 @@ import { useCart } from '../../context/CartContext';
 import toast from 'react-hot-toast';
 import NotifyMeModal from '../products/NotifyMeModal';
 
+// High resolution local product images
+import attaImg from '../../assets/Atta_1.png';
+import noodlesImg from '../../assets/noodles_1.png';
+import vermicelliImg from '../../assets/vermicelli.jpeg';
+import ravaImg from '../../assets/rava_1.png';
+import cutMangoImg from '../../assets/CutMango_1.png';
+import puliyotharaiImg from '../../assets/Ramar Puliyotharai Mix_DZN-2205_100g_11x14.5x6cm 02-02.jpg.jpeg';
+import idlyPodiImg from '../../assets/Ramar Idly Podi_DZN-2203_100g 03-02.jpg.jpeg';
+import elluPodiImg from '../../assets/Ramar Ellu Idly Podi_DZN-2204_100g_11x14.5x6cm 03-02.jpg.jpeg';
+import ulundhankaliImg from '../../assets/Ramar Ulunthankali Mix_DZN-2783_250g_145x190x90mm_10-02.jpg.jpeg';
+import kambuImg from '../../assets/Ramar Kambu Maavu 500g.jpg.jpeg';
+import maidaImg from '../../assets/Ramar Maida Pouch_DZN-1114_500g_350x240mm_7.jpg.jpeg';
+import puttuImg from '../../assets/Ramar Millet Puttu Podi_DZN-2782_250g_145x190x90mm 05-02.jpg.jpeg';
+import bajjiImg from '../../assets/Ramar Bajji Bonda.jpg.jpeg';
+import murukkuImg from '../../assets/Ramar_muruku.png';
+import poppetsImg from '../../assets/poppets.jpg';
+import milletPodiImg from '../../assets/milletpodi_1.png';
+import onionImg from '../../assets/onion.png';
+
+// Canonical 10-Category Ordering requested by client
+export const CANONICAL_CATEGORIES = [
+  "Millet",
+  "Instant Products",
+  "Noodles",
+  "Semiya",
+  "Flour Items",
+  "Rava Sooji",
+  "Pickles",
+  "Thokku",
+  "Traditional Mix",
+  "Appalam",
+];
+
 // Tamil name mapping for categories
 const categoryTamilNames = {
-  "FLOUR": "மாவு",
+  "Millet": "சிறுதானியம்",
+  "Instant Products": "உடனடி பொருட்கள்",
+  "Noodles": "நூடுல்ஸ்",
+  "Semiya": "சேமியா",
+  "Flour Items": "மாவு வகைகள்",
+  "Rava Sooji": "ரவை & சூஜி",
+  "Pickles": "ஊறுகாய்",
+  "Thokku": "தொக்கு",
+  "Traditional Mix": "பாரம்பரிய மிக்ஸ்",
+  "Appalam": "அப்பளம்",
+  // Legacy mappings for backward compatibility
+  "FLOUR": "மாவு வகைகள்",
   "NOODLES": "நூடுல்ஸ்",
   "INSTANT PRODUCTS": "உடனடி பொருட்கள்",
-  "RAVA": "ரவை",
+  "RAVA": "ரவை & சூஜி",
   "VERMICELLI": "சேமியா",
-  "spices": "மசாலா",
+  "spices": "பாரம்பரிய மிக்ஸ்",
   "pickles": "ஊறுகாய்",
-  "Millet Products": "சிறுதானிய பொருட்கள்",
-  "Maida": "மைதா",
-  "Sooji": "சூஜி",
+  "Millet Products": "சிறுதானியம்",
+  "Maida": "மாவு வகைகள்",
+  "Sooji": "ரவை & சூஜி",
   "MILLETS": "சிறுதானியம்",
+  "puppet": "அப்பளம்",
+};
+
+// Normalize any category string or product name into one of the 10 canonical categories
+export const normalizeCategory = (category, productName = "") => {
+  const cat = (category || "").trim();
+  const name = (productName || "").trim().toLowerCase();
+
+  // Explicit category matching
+  if (/^millet/i.test(cat) || cat.toUpperCase() === "MILLETS" || cat.toUpperCase() === "MILLET PRODUCTS") {
+    if (name.includes("noodle")) return "Noodles";
+    if (name.includes("semiya") || name.includes("vermicelli")) return "Semiya";
+    return "Millet";
+  }
+
+  if (/^instant/i.test(cat)) return "Instant Products";
+  if (/^noodle/i.test(cat)) return "Noodles";
+  if (/^semiya/i.test(cat) || /^vermicelli/i.test(cat) || /^semia/i.test(cat)) return "Semiya";
+  if (/^flour/i.test(cat) || /^maida/i.test(cat) || /^atta/i.test(cat)) return "Flour Items";
+  if (/^rava/i.test(cat) || /^sooji/i.test(cat)) return "Rava Sooji";
+  if (/^pickle/i.test(cat)) return "Pickles";
+  if (/^thokku/i.test(cat)) return "Thokku";
+  if (/^traditional/i.test(cat) || /^spices/i.test(cat) || /^podi/i.test(cat)) return "Traditional Mix";
+  if (/^appalam/i.test(cat) || /^puppet/i.test(cat) || /^papad/i.test(cat)) return "Appalam";
+
+  // Match by product name if category is generic
+  if (name.includes("pickle") || name.includes("oorugai")) return "Pickles";
+  if (name.includes("thokku")) return "Thokku";
+  if (name.includes("appalam") || name.includes("papad") || name.includes("vadam")) return "Appalam";
+  if (name.includes("noodle")) return "Noodles";
+  if (name.includes("semiya") || name.includes("vermicelli") || name.includes("semia")) return "Semiya";
+  if (name.includes("flour") || name.includes("atta") || name.includes("maida")) return "Flour Items";
+  if (name.includes("rava") || name.includes("sooji") || name.includes("kurunai")) return "Rava Sooji";
+  if (name.includes("puliyotharai") || name.includes("podi") || name.includes("kali")) return "Traditional Mix";
+  if (name.includes("millet") || name.includes("ragi") || name.includes("kambu") || name.includes("bajra")) return "Millet";
+  if (name.includes("parotta") || name.includes("instant") || name.includes("dosa mix") || name.includes("adai")) return "Instant Products";
+
+  return "Flour Items";
+};
+
+// Check if packaging is Bottle or Pack
+export const isBottlePresentation = (product) => {
+  if (product.packagingType === "bottle" || product.packaging === "bottle") return true;
+  if (product.packagingType === "pack" || product.packaging === "pack" || product.packaging === "pouch") return false;
+  const name = (product.name || "").toLowerCase();
+  if (name.includes("bottle") || name.includes("jar")) return true;
+  if (name.includes("pack") || name.includes("pouch")) return false;
+  return true; // Default to bottle for pickles/thokku if unspecified
+};
+
+export const isPackPresentation = (product) => {
+  if (product.packagingType === "pack" || product.packaging === "pack" || product.packaging === "pouch") return true;
+  const name = (product.name || "").toLowerCase();
+  return name.includes("pack") || name.includes("pouch");
 };
 
 // Tamil slogan mapping by product name keywords
 const getTamilSlogan = (name, category) => {
-  const lower = name.toLowerCase();
-  if (lower.includes('millet') || lower.includes('ragi') || lower.includes('bajra') || lower.includes('kambu')) {
+  const lower = (name || "").toLowerCase();
+  const lowerCat = (category || "").toLowerCase();
+
+  if (lower.includes("pickle") || lowerCat.includes("pickle")) {
+    return "பாரம்பரிய கைவண்ணத்தில் - சுவையான ஊறுகாய்";
+  }
+  if (lower.includes("thokku") || lowerCat.includes("thokku")) {
+    return "நாவில் ஊறும் சுவை - ராமர் ஸ்பெஷல் தொக்கு";
+  }
+  if (lower.includes("appalam") || lower.includes("papad") || lowerCat.includes("appalam")) {
+    return "மொறுமொறுப்பான சுவை - பாரம்பரிய அப்பளம்";
+  }
+  if (lower.includes("millet") || lower.includes("ragi") || lower.includes("bajra") || lower.includes("kambu") || lowerCat.includes("millet")) {
     return "சத்தான சிறுதானியம் - ஆரோக்கியத்திற்கு நல்லது";
   }
-  if (lower.includes('noodles')) {
+  if (lower.includes("noodles") || lowerCat.includes("noodles")) {
     return "ருசியான நொடிப்பொழுதில் - ராமர் நூடுல்ஸ்";
   }
-  if (lower.includes('vermicelli') || lower.includes('semiya')) {
+  if (lower.includes("vermicelli") || lower.includes("semiya") || lowerCat.includes("semiya")) {
     return "மென்மையான சேமியா - சுவையான உணவு";
   }
-  if (lower.includes('atta') || lower.includes('wheat') || lower.includes('maida')) {
+  if (lower.includes("atta") || lower.includes("wheat") || lower.includes("maida") || lowerCat.includes("flour")) {
     return "மென்மையானது, மிருதுவானது - ராமர் மாவு";
   }
-  if (lower.includes('sooji') || lower.includes('rava')) {
+  if (lower.includes("sooji") || lower.includes("rava") || lowerCat.includes("rava")) {
     return "சூப்பர் ரவை - சுவையான உப்மா";
   }
-  if (lower.includes('rice flour')) {
-    return "தூய அரிசி மாவு - சுவையான தோசை";
-  }
-  if (lower.includes('gram flour') || lower.includes('kadalai')) {
-    return "உயர் தர கடலை மாவு - சிறந்த சிற்றுண்டி";
-  }
-  if (lower.includes('idli podi') || lower.includes('idly podi')) {
-    return "சுவையான இட்லிக்கு ராமர் இட்லி பொடி";
-  }
-  if (lower.includes('ellu podi')) {
-    return "எள்ளின் சுவையுடன் - ராமர் எள்ளு இட்லி பொடி";
-  }
-  if (lower.includes('puliyotharai')) {
-    return "பாரம்பரிய சுவையில் புளியோதரை";
-  }
-  if (lower.includes('ulundhankali') || lower.includes('ulunthankali')) {
-    return "உடலுக்கு உறுதி - உளுந்தங்களி";
-  }
-  if (lower.includes('puttu')) {
-    return "சிறுதானிய சத்து - ராமர் புட்டு பொடி";
-  }
-  if (lower.includes('idiappam') || lower.includes('idiappa')) {
-    return "மென்மையான இடியாப்பம் - பாரம்பரிய சுவை";
-  }
-  if (lower.includes('murukku')) {
-    return "மொறுமொறுப்பான முறுக்கு - சிறந்த சிற்றுண்டி";
-  }
-  if (lower.includes('bajji') || lower.includes('bonda')) {
-    return "மொறுமொறுப்பான பஜ்ஜிக்கு - ராமர் மிக்ஸ்";
-  }
-  if (lower.includes('parotta')) {
-    return "மென்மையான பரோட்டா - எளிதான சமையல்";
-  }
-  if (lower.includes('kozhukattai')) {
-    return "பாரம்பரிய கொழுக்கட்டை - சுவையான தின்பண்டம்";
-  }
-  if (lower.includes('dosa') || lower.includes('adai')) {
-    return "சுவையான தோசை - எளிதான சமையல்";
-  }
-  if (lower.includes('corn')) {
-    return "சத்தான சோள மாவு - ஆரோக்கியமான உணவு";
+  if (lower.includes("puliyotharai") || lower.includes("idli podi") || lower.includes("podi") || lowerCat.includes("traditional")) {
+    return "பாரம்பரிய சுவையில் ராமர் ஸ்பெஷல் மிக்ஸ்";
   }
   return "ராமர் தரம் - சுவையும் ஆரோக்கியமும்";
 };
 
 // Get Tamil name for a product
 const getTamilName = (name, category) => {
-  const lower = name.toLowerCase();
-  if (lower.includes('millet') && lower.includes('noodles')) return "சிறுதானிய நூடுல்ஸ்";
-  if (lower.includes('millet') && lower.includes('vermicelli')) return "சிறுதானிய சேமியா";
-  if (lower.includes('millet') && (lower.includes('puttu') || lower.includes('dosa'))) return "சிறுதானிய மாவு";
-  if (lower.includes('ragi') && lower.includes('vermicelli')) return "ராகி சேமியா";
-  if (lower.includes('ragi') && lower.includes('flour')) return "ராகி மாவு";
-  if (lower.includes('bajra') && lower.includes('flour')) return "கம்பு மாவு";
-  if (lower.includes('vermicelli')) return "சேமியா";
-  if (lower.includes('noodles')) return "நூடுல்ஸ்";
-  if (lower.includes('atta') || lower.includes('wheat')) return "கோதுமை மாவு";
-  if (lower.includes('maida')) return "மைதா";
-  if (lower.includes('sooji') || lower.includes('rava')) return "ரவை";
-  if (lower.includes('rice flour')) return "அரிசி மாவு";
-  if (lower.includes('gram flour')) return "கடலை மாவு";
-  if (lower.includes('idli podi') || lower.includes('idly podi')) return "இட்லி பொடி";
-  if (lower.includes('ellu podi')) return "எள்ளு இட்லி பொடி";
-  if (lower.includes('puliyotharai')) return "புளியோதரை மிக்ஸ்";
-  if (lower.includes('ulundhankali') || lower.includes('ulunthankali')) return "உளுந்தங்களி மிக்ஸ்";
-  if (lower.includes('puttu')) return "புட்டு பொடி";
-  if (lower.includes('idiappam') || lower.includes('idiappa')) return "இடியாப்ப மாவு";
-  if (lower.includes('murukku')) return "முறுக்கு மாவு";
-  if (lower.includes('bajji') || lower.includes('bonda')) return "பஜ்ஜி போண்டா மிக்ஸ்";
-  if (lower.includes('parotta')) return "பரோட்டா மாவு";
-  if (lower.includes('kozhukattai')) return "கொழுக்கட்டை மாவு";
-  if (lower.includes('dosa') || lower.includes('adai')) return "தோசை மாவு";
-  if (lower.includes('corn')) return "சோள மாவு";
-  if (lower.includes('samba') && lower.includes('wheat')) return "சம்பா கோதுமை ரவை";
-  if (lower.includes('sivappu') || lower.includes('kavuni')) return "சிவப்பு கவுனி மாவு";
-  if (lower.includes('broken')) return "சம்பா கொத்திக்குருணை";
+  const lower = (name || "").toLowerCase();
+
+  if (lower.includes("thokku")) {
+    if (lower.includes("tomato") || lower.includes("thakkali")) return "தக்காளி தொக்கு";
+    if (lower.includes("garlic") || lower.includes("poondu")) return "பூண்டு தொக்கு";
+    if (lower.includes("onion") || lower.includes("vengayam")) return "வெங்காய தொக்கு";
+    return "சுவையான தொக்கு";
+  }
+  if (lower.includes("pickle") || lower.includes("oorugai")) {
+    if (lower.includes("mango") || lower.includes("maangai")) return "மாங்காய் ஊறுகாய்";
+    if (lower.includes("lemon") || lower.includes("elamichai") || lower.includes("lime")) return "எலுமிச்சை ஊறுகாய்";
+    if (lower.includes("garlic") || lower.includes("poondu")) return "பூண்டு ஊறுகாய்";
+    if (lower.includes("citron") || lower.includes("narthangai")) return "நார்த்தங்காய் ஊறுகாய்";
+    if (lower.includes("mixed")) return "கலவை ஊறுகாய்";
+    return "பாரம்பரிய ஊறுகாய்";
+  }
+  if (lower.includes("appalam") || lower.includes("papad") || lower.includes("vadam")) {
+    if (lower.includes("pepper") || lower.includes("milagu")) return "மிளகு அப்பளம்";
+    if (lower.includes("jeera") || lower.includes("seeragam")) return "சீரக அப்பளம்";
+    if (lower.includes("garlic")) return "பூண்டு அப்பளம்";
+    if (lower.includes("rice") || lower.includes("vadam")) return "அரிசி அப்பளம்";
+    return "பாரம்பரிய அப்பளம்";
+  }
+
+  if (lower.includes("millet") && lower.includes("noodles")) return "சிறுதானிய நூடுல்ஸ்";
+  if (lower.includes("ragi") && lower.includes("noodles")) return "ராகி நூடுல்ஸ்";
+  if (lower.includes("kambu") && lower.includes("noodles")) return "கம்பு நூடுல்ஸ்";
+  if (lower.includes("varagu") && lower.includes("noodles")) return "வரகு நூடுல்ஸ்";
+  if (lower.includes("thinai") && lower.includes("noodles")) return "தினை நூடுல்ஸ்";
+  if (lower.includes("millet") && lower.includes("vermicelli")) return "சிறுதானிய சேமியா";
+  if (lower.includes("millet") && (lower.includes("puttu") || lower.includes("dosa"))) return "சிறுதானிய மாவு";
+  if (lower.includes("ragi") && (lower.includes("vermicelli") || lower.includes("semiya"))) return "ராகி சேமியா";
+  if (lower.includes("ragi") && lower.includes("flour")) return "ராகி மாவு";
+  if (lower.includes("bajra") && lower.includes("flour")) return "கம்பு மாவு";
+  if (lower.includes("regular semiya") || lower.includes("vermicelli") || lower.includes("semiya")) return "சேமியா";
+  if (lower.includes("noodles")) return "நூடுல்ஸ்";
+  if (lower.includes("atta") || lower.includes("wheat")) return "கோதுமை மாவு";
+  if (lower.includes("maida")) return "மைதா";
+  if (lower.includes("sooji") || lower.includes("rava")) return "ரவை";
+  if (lower.includes("rice flour")) return "அரிசி மாவு";
+  if (lower.includes("gram flour")) return "கடலை மாவு";
+  if (lower.includes("idli podi") || lower.includes("idly podi")) return "இட்லி பொடி";
+  if (lower.includes("ellu podi")) return "எள்ளு இட்லி பொடி";
+  if (lower.includes("puliyotharai")) return "புளியோதரை மிக்ஸ்";
+  if (lower.includes("ulundhankali") || lower.includes("ulunthankali")) return "உளுந்தங்களி மிக்ஸ்";
+  if (lower.includes("puttu")) return "புட்டு பொடி";
+  if (lower.includes("idiappam") || lower.includes("idiappa")) return "இடியாப்ப மாவு";
+  if (lower.includes("murukku")) return "முறுக்கு மாவு";
+  if (lower.includes("bajji") || lower.includes("bonda")) return "பஜ்ஜி போண்டா மிக்ஸ்";
+  if (lower.includes("parotta")) return "பரோட்டா மாவு";
+  if (lower.includes("kozhukattai")) return "கொழுக்கட்டை மாவு";
+  if (lower.includes("dosa") || lower.includes("adai")) return "தோசை மிக்ஸ்";
+  if (lower.includes("corn")) return "சோள மாவு";
+  if (lower.includes("samba") && lower.includes("wheat")) return "சம்பா கோதுமை ரவை";
+  if (lower.includes("sivappu") || lower.includes("kavuni")) return "சிவப்பு கவுனி மாவு";
+  if (lower.includes("broken")) return "சம்பா கொத்திக்குருணை";
   
   // Fallback to category mapping
   return categoryTamilNames[category] || category;
@@ -259,18 +356,47 @@ const CategoryCarouselSection = ({
               product.inStock === false ||
               (product.stock !== undefined && Number(product.stock) <= 0);
 
+            const isPicklesOrThokku = category === "Pickles" || category === "Thokku";
+            const isBottle = isBottlePresentation(product);
+            const isPack = isPackPresentation(product);
+
+            // For Pack presentation in Pickles or Thokku, weight should NOT be mentioned/displayed!
+            let displayTitle = product.name;
+            if (isPicklesOrThokku && isPack) {
+              displayTitle = displayTitle
+                .replace(/\b\d+\.?\d*\s*(g|kg|gm|grams|ml|l)\b/gi, "")
+                .replace(/\s*-\s*$/, "")
+                .replace(/\(\s*\)/, "")
+                .trim();
+            }
+
             return (
               <div
-                key={product._id}
-                onClick={() => navigate(`/product/${product._id}`)}
+                key={product._id || product.name}
+                onClick={() => navigate(product._id && !product._id.includes("-") ? `/product/${product._id}` : `/products`)}
                 className="flex-shrink-0 w-[calc(50%-8px)] sm:w-[calc(33.333%-12px)] lg:w-[calc(25%-15px)] snap-start cursor-pointer group flex flex-col"
               >
                 {/* 1. Flipkart-Style Solid Grey Image Box with Rating Badge */}
                 <div className="relative w-full aspect-square bg-[#F2F3F5] rounded-2xl overflow-hidden p-3 sm:p-5 flex items-center justify-center border border-gray-200/50 shadow-xs group-hover:shadow-md transition-all duration-300">
+                  {/* Packaging Presentation Badge for Pickles & Thokku */}
+                  {isPicklesOrThokku && (
+                    <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-10">
+                      {isBottle ? (
+                        <span className="text-[10px] sm:text-[11px] font-bold text-amber-900 bg-amber-100/95 backdrop-blur-xs px-2 py-0.5 rounded-md border border-amber-300/80 shadow-xs">
+                          Bottle
+                        </span>
+                      ) : (
+                        <span className="text-[10px] sm:text-[11px] font-bold text-orange-900 bg-orange-100/95 backdrop-blur-xs px-2 py-0.5 rounded-md border border-orange-300/80 shadow-xs">
+                          Pack
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   {/* Product Image */}
                   <img
                     src={product.image || ph}
-                    alt={product.name}
+                    alt={displayTitle}
                     className="w-full h-full object-contain mix-blend-multiply group-hover:scale-106 transition-transform duration-300"
                   />
 
@@ -284,7 +410,7 @@ const CategoryCarouselSection = ({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      openZoom(product);
+                      openZoom({ ...product, name: displayTitle });
                     }}
                     className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 w-7 h-7 rounded-full bg-white/90 hover:bg-white shadow-xs border border-gray-200/70 flex items-center justify-center text-gray-600 hover:text-gray-900 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
                     title="Zoom preview"
@@ -302,7 +428,7 @@ const CategoryCarouselSection = ({
                 <div className="mt-2 sm:mt-2.5 flex flex-col flex-grow">
                   {/* Product Title */}
                   <h4 className="text-[13px] sm:text-[14.5px] font-semibold text-gray-900 truncate group-hover:text-[#E05A1B] transition-colors leading-snug">
-                    {product.name}
+                    {displayTitle}
                   </h4>
 
                   {/* Tamil Subtitle */}
@@ -406,66 +532,515 @@ const ProductRangeCarousel = () => {
   const [zoomedImage, setZoomedImage] = useState(null);
   const zoomRef = useRef(null);
 
-  // Extract weight from product name
-  const extractWeight = (name) => {
-    const match = name?.match(/(\d+\.?\d*)\s*(g|kg)/i);
-    if (!match) return 0;
-    const value = parseFloat(match[1]);
-    const unit = match[2].toLowerCase();
-    return unit === "kg" ? value : value / 1000;
-  };
+  // Comprehensive catalog dataset including all client requested additions
+  const DEFAULT_PRODUCTS = [
+    // 1. Millet
+    {
+      _id: "millet-1",
+      name: "Kambu (Bajra) Flour 500g",
+      category: "Millet",
+      price: 40,
+      image: kambuImg,
+      description: "Nutritious stone-ground pearl millet flour rich in iron.",
+    },
+    {
+      _id: "millet-2",
+      name: "Ragi Flour 500g",
+      category: "Millet",
+      price: 35,
+      image: "https://res.cloudinary.com/dbuyr00w6/image/upload/v1760272312/ragi-flour_mi8rqx.png",
+      description: "Fiber-rich finger millet flour for healthy dosas and rotis.",
+    },
+    {
+      _id: "millet-3",
+      name: "Millet Puttu Podi 250g",
+      category: "Millet",
+      price: 55,
+      image: puttuImg,
+      description: "Authentic steamed millet puttu mix rich in wholesome grains.",
+    },
+    {
+      _id: "millet-4",
+      name: "Millet Idly Dosa Mix 500g",
+      category: "Millet",
+      price: 65,
+      image: milletPodiImg,
+      description: "Traditional fermented millet batter mix for crispy dosas.",
+    },
+
+    // 2. Instant Products
+    {
+      _id: "instant-1",
+      name: "Instant Parotta 200g",
+      category: "Instant Products",
+      price: 30,
+      image: "https://res.cloudinary.com/dbuyr00w6/image/upload/v1760272318/instant-parotta_lhleky.png",
+      description: "Ready-to-cook layered flaky parotta.",
+    },
+    {
+      _id: "instant-2",
+      name: "Adai Dosa Mix 500g",
+      category: "Instant Products",
+      price: 85,
+      image: ph,
+      description: "Protein-rich multi-dal adai batter mix.",
+    },
+    {
+      _id: "instant-3",
+      name: "Rava Dosa Mix 500g",
+      category: "Instant Products",
+      price: 70,
+      image: ravaImg,
+      description: "Crispy hotel-style instant rava dosa mix.",
+    },
+    {
+      _id: "instant-4",
+      name: "Instant Puttu Mix 500g",
+      category: "Instant Products",
+      price: 60,
+      image: puttuImg,
+      description: "Quick aromatic rice and grain puttu blend.",
+    },
+
+    // 3. Noodles (Req 2: Noodles – 100g, Noodles – 200g, Millet Noodles – 4 products)
+    {
+      _id: "noodle-1",
+      name: "Noodles – 100g",
+      category: "Noodles",
+      price: 14,
+      image: noodlesImg,
+      description: "Classic Ramar instant noodles with delicious tastemaker spice blend.",
+    },
+    {
+      _id: "noodle-2",
+      name: "Noodles – 200g",
+      category: "Noodles",
+      price: 28,
+      image: noodlesImg,
+      description: "Family pack Ramar noodles with authentic aromatic spices.",
+    },
+    {
+      _id: "noodle-3",
+      name: "Ragi Millet Noodles 200g",
+      category: "Noodles",
+      price: 55,
+      image: "https://res.cloudinary.com/dbuyr00w6/image/upload/v1760272312/millet-noodles_d2kyyw.png",
+      description: "Health-focused finger millet noodles with natural seasoning.",
+    },
+    {
+      _id: "noodle-4",
+      name: "Kambu Millet Noodles 200g",
+      category: "Noodles",
+      price: 55,
+      image: "https://res.cloudinary.com/dbuyr00w6/image/upload/v1760272312/millet-noodles_d2kyyw.png",
+      description: "High energy pearl millet noodles made without refined flour.",
+    },
+    {
+      _id: "noodle-5",
+      name: "Varagu Millet Noodles 200g",
+      category: "Noodles",
+      price: 58,
+      image: "https://res.cloudinary.com/dbuyr00w6/image/upload/v1760272312/millet-noodles_d2kyyw.png",
+      description: "Kodo millet noodles rich in dietary fiber and nutrients.",
+    },
+    {
+      _id: "noodle-6",
+      name: "Thinai Millet Noodles 200g",
+      category: "Noodles",
+      price: 58,
+      image: "https://res.cloudinary.com/dbuyr00w6/image/upload/v1760272312/millet-noodles_d2kyyw.png",
+      description: "Foxtail millet noodles packed with essential minerals.",
+    },
+
+    // 4. Semiya (Req 3: Ragi Semiya – 200g, Regular Semiya – 200g, Semia – 500g)
+    {
+      _id: "semiya-1",
+      name: "Regular Semiya – 200g",
+      category: "Semiya",
+      price: 25,
+      image: vermicelliImg,
+      description: "Traditional roasted wheat vermicelli for savory upma and sweet payasam.",
+    },
+    {
+      _id: "semiya-2",
+      name: "Semia – 500g",
+      category: "Semiya",
+      price: 58,
+      image: vermicelliImg,
+      description: "Long roasted vermicelli strands for festival desserts and breakfast.",
+    },
+    {
+      _id: "semiya-3",
+      name: "Ragi Semiya – 200g",
+      category: "Semiya",
+      price: 32,
+      image: "https://res.cloudinary.com/dbuyr00w6/image/upload/v1760272313/ragi-vermicelli_gvvkfj.png",
+      description: "Nutritious finger millet vermicelli for healthy morning meals.",
+    },
+
+    // 5. Flour Items (Req 4: Flour Items)
+    {
+      _id: "flour-1",
+      name: "Chakki Atta 500g",
+      category: "Flour Items",
+      price: 32,
+      image: attaImg,
+      description: "100% whole wheat freshly ground chakki atta for soft rotis.",
+    },
+    {
+      _id: "flour-2",
+      name: "Chakki Atta 5kg",
+      category: "Flour Items",
+      price: 270,
+      image: attaImg,
+      description: "Premium large pack whole wheat chakki atta.",
+    },
+    {
+      _id: "flour-3",
+      name: "Maida 500g",
+      category: "Flour Items",
+      price: 35,
+      image: maidaImg,
+      description: "Superfine all-purpose flour for baking and traditional snacks.",
+    },
+    {
+      _id: "flour-4",
+      name: "Rice Flour 500g",
+      category: "Flour Items",
+      price: 30,
+      image: "https://res.cloudinary.com/dbuyr00w6/image/upload/v1760272316/rice-flour_cj7msm.png",
+      description: "Fine white rice flour ideal for idiappam, murukku, and sweets.",
+    },
+    {
+      _id: "flour-5",
+      name: "Gram Flour 500g",
+      category: "Flour Items",
+      price: 60,
+      image: "https://res.cloudinary.com/dbuyr00w6/image/upload/v1760272311/gram-flour_yyeeec.png",
+      description: "Pure chana dal besan flour for savory crispy snacks.",
+    },
+    {
+      _id: "flour-6",
+      name: "Murukku Flour 500g",
+      category: "Flour Items",
+      price: 60,
+      image: murukkuImg,
+      description: "Traditional savory snack flour blend for crispy festival murukku.",
+    },
+    {
+      _id: "flour-7",
+      name: "Bajji Bonda Mix 200g",
+      category: "Flour Items",
+      price: 30,
+      image: bajjiImg,
+      description: "Ready spiced batter mix for tea-time crispy bajjis and bondas.",
+    },
+    {
+      _id: "flour-8",
+      name: "Idiappa Flour 500g",
+      category: "Flour Items",
+      price: 50,
+      image: "https://res.cloudinary.com/dbuyr00w6/image/upload/v1760266660/WhatsApp_Image_2025-10-11_at_18.54.23_9b813d28_vdt6gm.jpg",
+      description: "Finely steamed rice idiyappam flour for soft string hoppers.",
+    },
+
+    // 6. Rava Sooji
+    {
+      _id: "rava-1",
+      name: "Roasted Sooji 250g",
+      category: "Rava Sooji",
+      price: 20,
+      image: ravaImg,
+      description: "Golden roasted semolina for quick lump-free upma and kesari.",
+    },
+    {
+      _id: "rava-2",
+      name: "Roasted Sooji 500g",
+      category: "Rava Sooji",
+      price: 36,
+      image: ravaImg,
+      description: "Premium roasted rava for fluffy breakfast delicacies.",
+    },
+    {
+      _id: "rava-3",
+      name: "Roasted Sooji 1kg",
+      category: "Rava Sooji",
+      price: 71,
+      image: ravaImg,
+      description: "Value family pack roasted semolina.",
+    },
+    {
+      _id: "rava-4",
+      name: "Broken Samba Wheat 500g",
+      category: "Rava Sooji",
+      price: 65,
+      image: "https://res.cloudinary.com/dbuyr00w6/image/upload/v1760266660/WhatsApp_Image_2025-10-11_at_18.54.24_7c543103_oj7kiz.jpg",
+      description: "Wholesome broken samba wheat daliya for healthy meals.",
+    },
+
+    // 7. Pickles (Req 5: Bottle First, Pack Second - Pack weight NOT mentioned)
+    {
+      _id: "pickle-1",
+      name: "Mango Pickle (Bottle) 300g",
+      category: "Pickles",
+      packagingType: "bottle",
+      price: 75,
+      image: cutMangoImg,
+      description: "Handcrafted sour and spicy cut mango pickle preserved in premium gingelly oil.",
+    },
+    {
+      _id: "pickle-2",
+      name: "Mixed Veg Pickle (Bottle) 300g",
+      category: "Pickles",
+      packagingType: "bottle",
+      price: 75,
+      image: cutMangoImg,
+      description: "Aromatic mixed vegetable pickle crafted with South Indian spices.",
+    },
+    {
+      _id: "pickle-3",
+      name: "Lime Pickle (Bottle) 300g",
+      category: "Pickles",
+      packagingType: "bottle",
+      price: 70,
+      image: cutMangoImg,
+      description: "Tangy sun-matured lemon pickle with mustard and fenugreek.",
+    },
+    {
+      _id: "pickle-4",
+      name: "Mango Pickle (Pack)",
+      category: "Pickles",
+      packagingType: "pack",
+      price: 45,
+      image: cutMangoImg,
+      description: "Convenient travel pouch of authentic spicy mango pickle.",
+    },
+    {
+      _id: "pickle-5",
+      name: "Mixed Veg Pickle (Pack)",
+      category: "Pickles",
+      packagingType: "pack",
+      price: 45,
+      image: cutMangoImg,
+      description: "Heritage vegetable pickle in fresh sealed stay-fresh pack.",
+    },
+    {
+      _id: "pickle-6",
+      name: "Lime Pickle (Pack)",
+      category: "Pickles",
+      packagingType: "pack",
+      price: 40,
+      image: cutMangoImg,
+      description: "Zesty lemon pickle packed in modern barrier pouch.",
+    },
+
+    // 8. Thokku (Req 6: Bottle First, Pack Second - Pack weight NOT mentioned)
+    {
+      _id: "thokku-1",
+      name: "Tomato Thokku (Bottle) 300g",
+      category: "Thokku",
+      packagingType: "bottle",
+      price: 85,
+      image: cutMangoImg,
+      description: "Slow-simmered ripe country tomatoes with spicy tempered seasoning in glass jar.",
+    },
+    {
+      _id: "thokku-2",
+      name: "Garlic Thokku (Bottle) 300g",
+      category: "Thokku",
+      packagingType: "bottle",
+      price: 95,
+      image: cutMangoImg,
+      description: "Immunity-boosting whole garlic cloves simmered in gingelly oil.",
+    },
+    {
+      _id: "thokku-3",
+      name: "Onion Thokku (Bottle) 300g",
+      category: "Thokku",
+      packagingType: "bottle",
+      price: 85,
+      image: onionImg,
+      description: "Caramelized shallot onion thokku perfect with idli and dosa.",
+    },
+    {
+      _id: "thokku-4",
+      name: "Tomato Thokku (Pack)",
+      category: "Thokku",
+      packagingType: "pack",
+      price: 50,
+      image: cutMangoImg,
+      description: "Flavorful simmered tomato thokku in fresh airtight packaging.",
+    },
+    {
+      _id: "thokku-5",
+      name: "Garlic Thokku (Pack)",
+      category: "Thokku",
+      packagingType: "pack",
+      price: 55,
+      image: cutMangoImg,
+      description: "Spicy pungent garlic thokku in protective pouch pack.",
+    },
+    {
+      _id: "thokku-6",
+      name: "Onion Thokku (Pack)",
+      category: "Thokku",
+      packagingType: "pack",
+      price: 50,
+      image: onionImg,
+      description: "Tasty onion thokku in flexible convenient pack.",
+    },
+
+    // 9. Traditional Mix (Req 7: Puliyotharai Mix & Traditional Mixes)
+    {
+      _id: "trad-1",
+      name: "Puliyotharai Mix 100g",
+      category: "Traditional Mix",
+      price: 45,
+      image: puliyotharaiImg,
+      description: "Temple style tamarind rice paste made with roasted spices and peanuts.",
+    },
+    {
+      _id: "trad-2",
+      name: "Traditional Idli Podi 100g",
+      category: "Traditional Mix",
+      price: 40,
+      image: idlyPodiImg,
+      description: "Spicy roasted lentils and red chili gun powder for hot idlis.",
+    },
+    {
+      _id: "trad-3",
+      name: "Ellu Idli Podi 100g",
+      category: "Traditional Mix",
+      price: 45,
+      image: elluPodiImg,
+      description: "Nutritious roasted sesame seed gunpowder with authentic aroma.",
+    },
+    {
+      _id: "trad-4",
+      name: "Ulundhankali Mix 250g",
+      category: "Traditional Mix",
+      price: 65,
+      image: ulundhankaliImg,
+      description: "Traditional roasted black gram strengthening mix for healthy kali.",
+    },
+
+    // 10. Appalam (Req 8: Appalam final category)
+    {
+      _id: "appalam-1",
+      name: "Traditional Appalam 100g",
+      category: "Appalam",
+      price: 35,
+      image: poppetsImg,
+      description: "Crispy sun-dried urad dal papad crafted in traditional village style.",
+    },
+    {
+      _id: "appalam-2",
+      name: "Pepper Appalam 100g",
+      category: "Appalam",
+      price: 40,
+      image: poppetsImg,
+      description: "Crunchy appalam infused with freshly cracked black peppercorns.",
+    },
+    {
+      _id: "appalam-3",
+      name: "Jeera Appalam 100g",
+      category: "Appalam",
+      price: 40,
+      image: poppetsImg,
+      description: "Digestive cumin-spiced appalam for festive dining.",
+    },
+    {
+      _id: "appalam-4",
+      name: "Rice Vadam / Appalam 100g",
+      category: "Appalam",
+      price: 45,
+      image: poppetsImg,
+      description: "Sun-dried crunchy rice crispies for meals and snacks.",
+    },
+  ];
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axiosInstance.get('/products');
-        let allProducts = Array.isArray(res.data) ? res.data : [];
-        
-        // Add computed fields and sort: millet products first
-        allProducts = allProducts.map(product => ({
+        let apiProducts = [];
+        try {
+          const res = await axiosInstance.get('/products');
+          if (Array.isArray(res.data) && res.data.length > 0) {
+            apiProducts = res.data;
+          }
+        } catch (e) {
+          console.warn("Backend products fetch failed, using fallback catalog:", e);
+        }
+
+        // Map backend products to canonical categories
+        const normalizedApiProducts = apiProducts.map((p) => {
+          const canonicalCat = normalizeCategory(p.category, p.name);
+          return {
+            ...p,
+            category: canonicalCat,
+            originalCategory: p.category,
+            packagingType:
+              p.packagingType ||
+              (isPackPresentation(p) ? "pack" : isBottlePresentation(p) ? "bottle" : undefined),
+          };
+        });
+
+        // Merge: DEFAULT_PRODUCTS + normalizedApiProducts
+        const mergedMap = new Map();
+        DEFAULT_PRODUCTS.forEach((dp) => {
+          mergedMap.set(dp.name.toLowerCase().trim(), dp);
+        });
+
+        normalizedApiProducts.forEach((ap) => {
+          const key = ap.name.toLowerCase().trim();
+          if (mergedMap.has(key)) {
+            const existing = mergedMap.get(key);
+            mergedMap.set(key, { ...existing, ...ap, category: ap.category || existing.category });
+          } else {
+            mergedMap.set(key, ap);
+          }
+        });
+
+        let allProducts = Array.from(mergedMap.values());
+
+        // Add computed fields
+        allProducts = allProducts.map((product) => ({
           ...product,
           tamilName: getTamilName(product.name, product.category),
           tamilSlogan: getTamilSlogan(product.name, product.category),
         }));
 
-        // Define custom priority order for specific products
-        const getProductPriority = (product) => {
-          const lower = product.name.toLowerCase();
-          if (lower.includes('millet') && lower.includes('dosa')) return 1;
-          if (lower.includes('millet') && lower.includes('puttu')) return 2;
-          if (lower.includes('millet') && lower.includes('noodles')) return 3;
-          if ((lower.includes('millet') && lower.includes('semiya')) || (lower.includes('millet') && lower.includes('vermicelli'))) return 4;
-          if (lower.includes('bajra') && lower.includes('flour')) return 5;
-          if (lower.includes('ragi') && lower.includes('flour')) return 6;
-          if (lower.includes('millet') && (lower.includes('idly') || lower.includes('idli')) && lower.includes('podi')) return 7;
-          return 999; // All other products
-        };
+        setProducts(allProducts);
 
-        // Sort: custom priority order first, then millet products, then by category
-        allProducts.sort((a, b) => {
-          const priorityA = getProductPriority(a);
-          const priorityB = getProductPriority(b);
-          if (priorityA !== priorityB) return priorityA - priorityB;
-          
-          const aIsMillet = isMilletProduct(a);
-          const bIsMillet = isMilletProduct(b);
-          if (aIsMillet && !bIsMillet) return -1;
-          if (!aIsMillet && bIsMillet) return 1;
-          return (a.category || '').localeCompare(b.category || '');
+        // Group products into CANONICAL_CATEGORIES in exact order
+        const grouped = {};
+        CANONICAL_CATEGORIES.forEach((cat) => {
+          grouped[cat] = [];
         });
 
-        setProducts(allProducts);
-        
-        // Group products by category
-        const grouped = allProducts.reduce((acc, product) => {
-          const category = product.category || 'Other';
-          if (!acc[category]) {
-            acc[category] = [];
+        allProducts.forEach((product) => {
+          const cat = product.category;
+          if (grouped[cat]) {
+            grouped[cat].push(product);
+          } else {
+            grouped["Flour Items"].push(product);
           }
-          acc[category].push(product);
-          return acc;
-        }, {});
-        
+        });
+
+        // Specific category sorting:
+        // Pickles & Thokku: Bottle First, Pack Second!
+        ["Pickles", "Thokku"].forEach((catKey) => {
+          if (grouped[catKey]) {
+            grouped[catKey].sort((a, b) => {
+              const aIsBottle = isBottlePresentation(a);
+              const bIsBottle = isBottlePresentation(b);
+              if (aIsBottle && !bIsBottle) return -1;
+              if (!aIsBottle && bIsBottle) return 1;
+              return 0;
+            });
+          }
+        });
+
         setGroupedProducts(grouped);
       } catch (error) {
         console.error("Failed to fetch products for carousel:", error);
@@ -577,17 +1152,29 @@ const ProductRangeCarousel = () => {
   // Get category display name
   const getCategoryDisplayName = (category) => {
     const categoryNames = {
-      "FLOUR": "Flour",
+      "Millet": "Millet",
+      "Instant Products": "Instant Products",
+      "Noodles": "Noodles",
+      "Semiya": "Semiya",
+      "Flour Items": "Flour Items",
+      "Rava Sooji": "Rava Sooji",
+      "Pickles": "Pickles",
+      "Thokku": "Thokku",
+      "Traditional Mix": "Traditional Mix",
+      "Appalam": "Appalam",
+      // legacy mappings
+      "FLOUR": "Flour Items",
       "NOODLES": "Noodles",
       "INSTANT PRODUCTS": "Instant Products",
-      "RAVA": "Rava",
-      "VERMICELLI": "Vermicelli",
-      "spices": "Spices",
+      "RAVA": "Rava Sooji",
+      "VERMICELLI": "Semiya",
+      "spices": "Traditional Mix",
       "pickles": "Pickles",
-      "Millet Products": "Millet Products",
-      "Maida": "Maida",
-      "Sooji": "Sooji",
-      "MILLETS": "Millets",
+      "Millet Products": "Millet",
+      "Maida": "Flour Items",
+      "Sooji": "Rava Sooji",
+      "MILLETS": "Millet",
+      "puppet": "Appalam",
     };
     return categoryNames[category] || category;
   };
@@ -737,19 +1324,23 @@ const ProductRangeCarousel = () => {
           </div>
         </div>
 
-        {/* Category Carousels */}
+        {/* Category Carousels in strict client ordered sequence */}
         <div className="space-y-14">
-          {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
-            <CategoryCarouselSection
-              key={category}
-              category={category}
-              categoryProducts={categoryProducts}
-              getCategoryDisplayName={getCategoryDisplayName}
-              navigate={navigate}
-              addToCart={addToCart}
-              openZoom={openZoom}
-            />
-          ))}
+          {CANONICAL_CATEGORIES.map((category) => {
+            const categoryProducts = groupedProducts[category] || [];
+            if (categoryProducts.length === 0) return null;
+            return (
+              <CategoryCarouselSection
+                key={category}
+                category={category}
+                categoryProducts={categoryProducts}
+                getCategoryDisplayName={getCategoryDisplayName}
+                navigate={navigate}
+                addToCart={addToCart}
+                openZoom={openZoom}
+              />
+            );
+          })}
         </div>
       </div>
 
@@ -822,7 +1413,9 @@ const ProductRangeCarousel = () => {
 
             {/* Product info bar */}
             <div className="absolute -top-12 left-0 text-white text-sm font-medium">
-              {zoomedImage.name}
+              {(zoomedImage.category === "Pickles" || zoomedImage.category === "Thokku") && isPackPresentation(zoomedImage)
+                ? zoomedImage.name.replace(/\b\d+\.?\d*\s*(g|kg|gm|grams|ml|l)\b/gi, "").replace(/\s*-\s*$/, "").replace(/\(\s*\)/, "").trim()
+                : zoomedImage.name}
             </div>
 
             {/* Image container */}

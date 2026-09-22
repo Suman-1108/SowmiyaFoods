@@ -3,6 +3,17 @@ import { X, Upload, Image as ImageIcon, Check, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 
 const DEFAULT_CATEGORIES = [
+  "Millet",
+  "Instant Products",
+  "Noodles",
+  "Semiya",
+  "Flour Items",
+  "Rava Sooji",
+  "Pickles",
+  "Thokku",
+  "Traditional Mix",
+  "Appalam",
+  // Legacy categories
   "FLOUR",
   "NOODLES",
   "RAVA",

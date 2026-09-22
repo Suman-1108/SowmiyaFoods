@@ -9,17 +9,29 @@ import NotifyMeModal from "../products/NotifyMeModal";
 
 // Tamil name mapping for categories
 const categoryTamilNames = {
-  "FLOUR": "மாவு",
+  "Millet": "சிறுதானியம்",
+  "Instant Products": "உடனடி பொருட்கள்",
+  "Noodles": "நூடுல்ஸ்",
+  "Semiya": "சேமியா",
+  "Flour Items": "மாவு வகைகள்",
+  "Rava Sooji": "ரவை & சூஜி",
+  "Pickles": "ஊறுகாய்",
+  "Thokku": "தொக்கு",
+  "Traditional Mix": "பாரம்பரிய மிக்ஸ்",
+  "Appalam": "அப்பளம்",
+  // Legacy mappings
+  "FLOUR": "மாவு வகைகள்",
   "NOODLES": "நூடுல்ஸ்",
   "INSTANT PRODUCTS": "உடனடி பொருட்கள்",
-  "RAVA": "ரவை",
+  "RAVA": "ரவை & சூஜி",
   "VERMICELLI": "சேமியா",
-  "spices": "மசாலா",
+  "spices": "பாரம்பரிய மிக்ஸ்",
   "pickles": "ஊறுகாய்",
-  "Millet Products": "சிறுதானிய பொருட்கள்",
-  "Maida": "மைதா",
-  "Sooji": "சூஜி",
+  "Millet Products": "சிறுதானியம்",
+  "Maida": "மாவு வகைகள்",
+  "Sooji": "ரவை & சூஜி",
   "MILLETS": "சிறுதானியம்",
+  "puppet": "அப்பளம்",
 };
 
 // Tamil slogan mapping by product name keywords

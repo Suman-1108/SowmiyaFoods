@@ -761,17 +761,28 @@ const Dashboard = () => {
                         required
                       >
                         <option value="">Select a category</option>
-                        <option value="VERMICELLI">VERMICELLI</option>
-                        <option value="RAVA">RAVA</option>
-                        <option value="FLOUR">FLOUR</option>
-                        <option value="NOODLES">NOODLES</option>
-                        <option value="INSTANT PRODUCTS">INSTANT PRODUCTS</option>
-                        <option value="Millet Products">Millet Products</option>
-                        <option value="Sooji">Sooji</option>
-                        <option value="Maida">Maida</option>
-                        <option value="puppet">Puppet</option>
-                        <option value="snacks">Snacks</option>
-                        <option value="pickles">Pickles</option>
+                        <option value="Millet">Millet</option>
+                        <option value="Instant Products">Instant Products</option>
+                        <option value="Noodles">Noodles</option>
+                        <option value="Semiya">Semiya</option>
+                        <option value="Flour Items">Flour Items</option>
+                        <option value="Rava Sooji">Rava Sooji</option>
+                        <option value="Pickles">Pickles</option>
+                        <option value="Thokku">Thokku</option>
+                        <option value="Traditional Mix">Traditional Mix</option>
+                        <option value="Appalam">Appalam</option>
+                        <option disabled>──────────</option>
+                        <option value="VERMICELLI">VERMICELLI (Legacy)</option>
+                        <option value="RAVA">RAVA (Legacy)</option>
+                        <option value="FLOUR">FLOUR (Legacy)</option>
+                        <option value="NOODLES">NOODLES (Legacy)</option>
+                        <option value="INSTANT PRODUCTS">INSTANT PRODUCTS (Legacy)</option>
+                        <option value="Millet Products">Millet Products (Legacy)</option>
+                        <option value="Sooji">Sooji (Legacy)</option>
+                        <option value="Maida">Maida (Legacy)</option>
+                        <option value="puppet">Puppet (Legacy)</option>
+                        <option value="snacks">Snacks (Legacy)</option>
+                        <option value="pickles">Pickles (Legacy)</option>
                       </select>
                     </div>
                     <div className="md:col-span-2">
