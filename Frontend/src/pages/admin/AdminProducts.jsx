@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Package,
   Plus,
@@ -152,6 +152,23 @@ const AdminProducts = () => {
       window.removeEventListener("categoriesUpdated", handleUpdate);
     };
   }, []);
+
+  // Handle direct links from Home carousels (e.g., /portal/products?category=Pickles or /portal/products?edit=123)
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const cat = searchParams.get("category");
+    if (cat) {
+      setSelectedCategory(cat);
+    }
+    const editId = searchParams.get("edit");
+    if (editId && products.length > 0) {
+      const found = products.find((p) => String(p._id) === String(editId));
+      if (found) {
+        setEditingProduct(found);
+        setIsModalOpen(true);
+      }
+    }
+  }, [searchParams, products]);
 
   // Collect available unique categories (combining server categories + product categories)
   const categories = useMemo(() => {
