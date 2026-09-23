@@ -36,20 +36,42 @@ const generateUniqueSlug = async (name, currentProductId = null) => {
   return slug;
 };
 
-// Helper to upload an image to Cloudinary if it is a Base64 string
-const uploadToCloudinary = async (imageString) => {
-  if (imageString && imageString.startsWith("data:image")) {
+// Helper to upload an image to Cloudinary (supports Base64 data URIs and external image URLs)
+const uploadToCloudinary = async (imageString, folder = "sowmiyafoods") => {
+  if (!imageString || typeof imageString !== "string") {
+    return imageString;
+  }
+
+  const trimmed = imageString.trim();
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || "qnbhfeck";
+
+  // If already hosted on our Cloudinary account, return as is
+  if (trimmed.includes(`res.cloudinary.com/${cloudName}`)) {
+    return trimmed;
+  }
+
+  // If local asset path or placeholder, return as is
+  if (trimmed.startsWith("/") || trimmed.startsWith("./") || trimmed.startsWith("../")) {
+    return trimmed;
+  }
+
+  // If Base64 string or remote HTTP/HTTPS image URL, upload to Cloudinary
+  if (trimmed.startsWith("data:image") || trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
     try {
-      const result = await cloudinary.uploader.upload(imageString, {
-        folder: "sowmiyafoods",
+      const result = await cloudinary.uploader.upload(trimmed, {
+        folder: folder,
+        resource_type: "auto",
       });
-      return result.secure_url;
+      if (result && result.secure_url) {
+        return result.secure_url;
+      }
     } catch (error) {
-      console.warn("Cloudinary upload failed (using raw image fallback):", error.message || error);
-      return imageString;
+      console.warn("Cloudinary upload failed (using fallback image):", error.message || error);
+      return trimmed;
     }
   }
-  return imageString; // Return as is if already a URL or empty
+
+  return trimmed;
 };
 
 

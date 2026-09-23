@@ -265,20 +265,24 @@ router.post("/upload-image", requirePermission("settings:manage"), async (req, r
     }
 
     // Try Cloudinary upload if credentials are provided in .env
-    if (image.startsWith("data:image") && process.env.CLOUDINARY_CLOUD_NAME) {
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || "qnbhfeck";
+    const isCloudinaryAlready = typeof image === "string" && image.includes(`res.cloudinary.com/${cloudName}`);
+
+    if (!isCloudinaryAlready && typeof image === "string" && (image.startsWith("data:image") || image.startsWith("http://") || image.startsWith("https://"))) {
       try {
         const uploadRes = await cloudinary.uploader.upload(image, {
           folder: "sowmiyafoods/branding",
+          resource_type: "auto",
         });
         if (uploadRes?.secure_url) {
           return res.json({ success: true, url: uploadRes.secure_url });
         }
       } catch (cloudErr) {
-        console.warn("Cloudinary upload warning, falling back to base64 image data:", cloudErr.message);
+        console.warn("Cloudinary upload warning, falling back to original image data:", cloudErr.message);
       }
     }
 
-    // Fallback: Return image data URL directly so uploading local files always works seamlessly
+    // Fallback: Return image data directly so uploading local files always works seamlessly
     return res.json({ success: true, url: image });
   } catch (err) {
     console.error("Error processing branding image:", err);
