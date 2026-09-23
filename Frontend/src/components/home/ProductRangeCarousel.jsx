@@ -1136,7 +1136,7 @@ const ProductRangeCarousel = () => {
 
   if (loading) {
     return (
-      <section className="py-16 relative overflow-hidden bg-gradient-to-b from-[#FFFDF8] via-[#FAF6ED] to-[#FFF9F2]">
+      <section className="py-16 relative overflow-hidden bg-gradient-to-b from-[#FFFDF9] via-[#FAF7F2] to-[#F5EFE6]">
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-12">
             <p className="text-[#5D4037] text-sm font-medium mb-2">எங்கள் தயாரிப்புகள்</p>
@@ -1181,7 +1181,7 @@ const ProductRangeCarousel = () => {
   return (
     <section
       id="our-product-range"
-      className="pt-16 pb-24 md:pb-32 relative overflow-hidden bg-gradient-to-b from-[#FFFDF8] via-[#FAF6ED] to-[#FFF9F2] scroll-mt-20"
+      className="pt-16 pb-24 md:pb-32 relative overflow-hidden bg-gradient-to-b from-[#FFFDF9] via-[#FAF7F2] to-[#F5EFE6] scroll-mt-20"
     >
       {/* ========================================================= */}
       {/* Seamless Moving Background Pattern (Continuous Motion) */}
