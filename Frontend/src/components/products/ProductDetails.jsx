@@ -39,6 +39,7 @@ import ph from "../../assets/image.png";
 import brandLogo from "../../assets/logo.png";
 import toast from "react-hot-toast";
 import NotifyMeModal from "./NotifyMeModal";
+import { ProductDetailSkeleton } from "../common/ProductSkeleton";
 
 // Tamil slogan / subtitle helper
 const getTamilSlogan = (name = "") => {
@@ -394,9 +395,8 @@ const ProductDetails = () => {
     return (
       <div className="min-h-screen flex flex-col bg-[#FAF9F6]">
         <Navbar />
-        <div className="flex-grow flex flex-col items-center justify-center py-24">
-          <div className="w-12 h-12 border-4 border-amber-500/20 border-t-amber-600 rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading delicious product details...</p>
+        <div className="flex-grow py-6">
+          <ProductDetailSkeleton />
         </div>
         <Footer />
       </div>

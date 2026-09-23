@@ -23,6 +23,7 @@ import ph from "../../assets/image.png";
 import Navbar from "../Navbar";
 import Footer from "../Footer";
 import NotifyMeModal from "./NotifyMeModal";
+import { ProductGridSkeleton } from "../common/ProductSkeleton";
 import ProductFilterSidebar from "./ProductFilterSidebar";
 
 const AllProducts = () => {
@@ -512,13 +513,10 @@ const AllProducts = () => {
                 </div>
               )}
 
-              {/* 🔄 Loading State */}
+              {/* 🔄 Loading Skeleton State */}
               {loading && (
-                <div className="py-20 flex flex-col items-center justify-center bg-white rounded-2xl border border-gray-200/80 p-8 shadow-xs">
-                  <div className="w-10 h-10 border-3 border-amber-500/20 border-t-[#e8703b] rounded-full animate-spin mb-3"></div>
-                  <p className="text-gray-600 font-medium text-sm">
-                    Loading products...
-                  </p>
+                <div className="py-2">
+                  <ProductGridSkeleton count={8} />
                 </div>
               )}
 

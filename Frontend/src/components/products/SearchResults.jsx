@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import ph from "../../assets/image.png";
 import { fetchProductsBySearch } from "../../api/productApi";
 import NotifyMeModal from "./NotifyMeModal";
+import { ProductGridSkeleton } from "../common/ProductSkeleton";
 
 const SearchResults = () => {
   const location = useLocation();
@@ -101,9 +102,11 @@ const SearchResults = () => {
           </div>
 
           {loading ? (
-            <div className="py-20 flex flex-col items-center justify-center">
-              <div className="w-10 h-10 border-3 border-amber-500/20 border-t-[#e8703b] rounded-full animate-spin mb-3"></div>
-              <p className="text-gray-500 font-medium text-sm">Searching products...</p>
+            <div className="py-6">
+              <ProductGridSkeleton
+                count={8}
+                columns="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+              />
             </div>
           ) : products.length === 0 ? (
             <div className="py-16 text-center bg-white rounded-2xl p-8 border border-gray-200/80 shadow-xs max-w-md mx-auto">

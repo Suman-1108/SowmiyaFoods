@@ -6,6 +6,7 @@ import { useHomeProducts } from "../../hooks/useProducts";
 import { useCart } from "../../context/CartContext";
 import toast from "react-hot-toast";
 import NotifyMeModal from "../products/NotifyMeModal";
+import { ProductCarouselSkeleton } from "../common/ProductSkeleton";
 
 // Tamil name mapping for categories
 const categoryTamilNames = {
@@ -185,8 +186,15 @@ const TrendingProducts = () => {
     }
   };
 
-  if (isLoading)
-    return <p className="text-center mt-10 text-gray-500">Loading products...</p>;
+  if (isLoading) {
+    return (
+      <section className="py-12 bg-white relative">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <ProductCarouselSkeleton count={5} hasHeader={true} title="Trending Products" />
+        </div>
+      </section>
+    );
+  }
   if (error)
     return (
       <p className="text-center mt-10 text-red-500">{error.message || "Failed to fetch products"}</p>

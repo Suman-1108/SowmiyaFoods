@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axiosInstance';
 import { useCart } from '../../context/CartContext';
-import ph from '../../assets/image.png';
 import NotifyMeModal from '../products/NotifyMeModal';
+import { ProductCardSkeleton } from '../common/ProductSkeleton';
 
 // Tamil name mapping for categories
 const categoryTamilNames = {
@@ -265,13 +265,10 @@ const FeaturedCollections = () => {
           <div className="flex gap-4 overflow-hidden py-2">
             {[...Array(5)].map((_, i) => (
               <div
-                key={i}
-                className="flex-shrink-0 w-[205px] sm:w-[220px] md:w-[235px] bg-slate-50 border border-slate-100 rounded-2xl p-4 animate-pulse"
+                key={`feat-skel-${i}`}
+                className="flex-shrink-0 w-[205px] sm:w-[220px] md:w-[235px]"
               >
-                <div className="w-full aspect-square bg-slate-200 rounded-xl mb-3" />
-                <div className="h-4 bg-slate-200 rounded w-3/4 mb-2" />
-                <div className="h-3 bg-slate-200 rounded w-1/2 mb-3" />
-                <div className="h-8 bg-slate-200 rounded-lg w-full" />
+                <ProductCardSkeleton />
               </div>
             ))}
           </div>

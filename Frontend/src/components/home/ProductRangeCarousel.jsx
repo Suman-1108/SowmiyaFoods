@@ -8,6 +8,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import NotifyMeModal from '../products/NotifyMeModal';
+import { ProductRangeSectionSkeleton } from '../common/ProductSkeleton';
 
 // Canonical 10-Category Ordering requested by client
 export const CANONICAL_CATEGORIES = [
@@ -677,10 +678,25 @@ const ProductRangeCarousel = () => {
           <div className="text-center mb-12">
             <p className="text-[#5D4037] text-sm font-medium mb-2">எங்கள் தயாரிப்புகள்</p>
             <h2 className="text-[#3E2723] text-4xl md:text-5xl font-bold italic">Our Range Of Products</h2>
+            {/* Decorative divider */}
+            <div className="flex items-center justify-center gap-4 mt-4 mb-10">
+              <div className="flex gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="w-1 h-3 bg-[#5D4033]/60 rounded-full"></div>
+                ))}
+              </div>
+              <div className="w-16 h-0.5 bg-[#5D4037]/40"></div>
+              <div className="w-3 h-3 bg-[#5D4037]/60 rotate-45"></div>
+              <div className="w-16 h-0.5 bg-[#5D4037]/40"></div>
+              <div className="flex gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="w-1 h-3 bg-[#5D4033]/60 rounded-full"></div>
+                ))}
+              </div>
+            </div>
           </div>
-          <div className="flex justify-center items-center py-10">
-            <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-          </div>
+
+          <ProductRangeSectionSkeleton count={2} />
         </div>
       </section>
     );
