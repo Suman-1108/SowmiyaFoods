@@ -35,6 +35,7 @@ import {
   updateProduct,
   getLowStockAlerts,
 } from "../../api/productApi";
+import { getCachedProducts, setCachedProducts } from "../../utils/productCache";
 import ProductModal from "../../components/admin/ProductModal";
 import TableSortControl from "../../components/admin/TableSortControl";
 
@@ -50,9 +51,11 @@ const INVENTORY_SORT_OPTIONS = [
 ];
 
 const AdminInventory = () => {
-  const [products, setProducts] = useState([]);
+  const cachedData = React.useRef(getCachedProducts()).current;
+  const initialProducts = cachedData?.products || [];
+  const [products, setProducts] = useState(initialProducts);
   const [customerAlerts, setCustomerAlerts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL"); // ALL, LOW_STOCK, OUT_OF_STOCK, IN_STOCK, WAITLIST
@@ -63,13 +66,22 @@ const AdminInventory = () => {
   const [editingProduct, setEditingProduct] = useState(null);
 
   // Local draft stock state for inline editing: { [productId]: { stock: number, threshold: number, isEditing: boolean, saving: boolean } }
-  const [stockDrafts, setStockDrafts] = useState({});
+  const [stockDrafts, setStockDrafts] = useState(() => {
+    const drafts = {};
+    initialProducts.forEach((p) => {
+      drafts[p._id] = {
+        stock: p.stock ?? 20,
+        lowStockThreshold: p.lowStockThreshold ?? 10,
+        isSaving: false,
+      };
+    });
+    return drafts;
+  });
 
   const token = localStorage.getItem("token");
 
   // Fetch products & customer restock alerts
   const fetchInventory = async () => {
-    setLoading(true);
     try {
       const [dataResult, alertsResult] = await Promise.allSettled([
         getAllProducts(),
@@ -78,25 +90,35 @@ const AdminInventory = () => {
 
       const data = dataResult.status === "fulfilled" ? dataResult.value : [];
       const list = Array.isArray(data) ? data : data?.products || [];
-      setProducts(list);
+      if (list.length > 0) {
+        setProducts(list);
+        setCachedProducts(list);
+        // Initialize drafts
+        const drafts = {};
+        list.forEach((p) => {
+          drafts[p._id] = {
+            stock: p.stock ?? 20,
+            lowStockThreshold: p.lowStockThreshold ?? 10,
+            isSaving: false,
+          };
+        });
+        setStockDrafts(drafts);
+      } else {
+        const fallback = getCachedProducts();
+        if (fallback?.products?.length > 0) {
+          setProducts((prev) => (prev.length > 0 ? prev : fallback.products));
+        }
+      }
 
       if (alertsResult.status === "fulfilled" && alertsResult.value?.customerAlerts) {
         setCustomerAlerts(alertsResult.value.customerAlerts);
       }
-
-      // Initialize drafts
-      const drafts = {};
-      list.forEach((p) => {
-        drafts[p._id] = {
-          stock: p.stock ?? 0,
-          lowStockThreshold: p.lowStockThreshold ?? 10,
-          isSaving: false,
-        };
-      });
-      setStockDrafts(drafts);
     } catch (err) {
-      console.error("Failed to load inventory", err);
-      toast.error("Failed to load inventory items");
+      console.warn("Inventory sync warning:", err);
+      const fallback = getCachedProducts();
+      if (fallback?.products?.length > 0) {
+        setProducts((prev) => (prev.length > 0 ? prev : fallback.products));
+      }
     } finally {
       setLoading(false);
     }

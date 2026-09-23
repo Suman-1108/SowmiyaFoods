@@ -33,6 +33,7 @@ import {
   createCategory,
   deleteCategory,
 } from "../../api/productApi";
+import { getCachedProducts, setCachedProducts } from "../../utils/productCache";
 import ProductModal from "../../components/admin/ProductModal";
 import BulkImportModal from "../../components/admin/BulkImportModal";
 import TableSortControl from "../../components/admin/TableSortControl";
@@ -77,10 +78,11 @@ const LEGACY_CATEGORY_MAP = {
 };
 
 const AdminProducts = () => {
-  const [products, setProducts] = useState([]);
-  const [serverCategories, setServerCategories] = useState([]);
+  const cachedData = React.useRef(getCachedProducts()).current;
+  const [products, setProducts] = useState(cachedData?.products || []);
+  const [serverCategories, setServerCategories] = useState(cachedData?.categories || []);
   const [customerAlerts, setCustomerAlerts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [stockFilter, setStockFilter] = useState("ALL");
@@ -109,14 +111,13 @@ const AdminProducts = () => {
   const fetchCategoriesList = async () => {
     try {
       const data = await getAllCategories();
-      if (Array.isArray(data)) setServerCategories(data);
+      if (Array.isArray(data) && data.length > 0) setServerCategories(data);
     } catch (err) {
-      console.error("Failed to load categories:", err);
+      console.warn("Failed to load live categories (using cached):", err);
     }
   };
 
   const fetchProductsList = async () => {
-    setLoading(true);
     try {
       const [dataRes, alertsRes] = await Promise.allSettled([
         getAllProducts(),
@@ -124,14 +125,25 @@ const AdminProducts = () => {
       ]);
       const data = dataRes.status === "fulfilled" ? dataRes.value : [];
       const list = Array.isArray(data) ? data : data?.products || [];
-      setProducts(list);
+      if (list.length > 0) {
+        setProducts(list);
+        setCachedProducts(list);
+      } else {
+        const fallback = getCachedProducts();
+        if (fallback?.products?.length > 0) {
+          setProducts(prev => (prev.length > 0 ? prev : fallback.products));
+        }
+      }
 
       if (alertsRes.status === "fulfilled" && alertsRes.value?.customerAlerts) {
         setCustomerAlerts(alertsRes.value.customerAlerts);
       }
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to load products");
+      console.warn("Live sync warning:", err);
+      const fallback = getCachedProducts();
+      if (fallback?.products?.length > 0) {
+        setProducts(prev => (prev.length > 0 ? prev : fallback.products));
+      }
     } finally {
       setLoading(false);
     }

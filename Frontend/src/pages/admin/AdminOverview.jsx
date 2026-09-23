@@ -24,11 +24,13 @@ import {
 import toast from "react-hot-toast";
 import { getAllProducts } from "../../api/productApi";
 import { getAllOrders } from "../../api/orderApi";
+import { getCachedProducts } from "../../utils/productCache";
 import axiosInstance from "../../api/axiosInstance";
 
 const AdminOverview = () => {
-  const [loading, setLoading] = useState(true);
-  const [products, setProducts] = useState([]);
+  const cachedData = React.useRef(getCachedProducts()).current;
+  const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState(cachedData?.products || []);
   const [orders, setOrders] = useState([]);
   const [usersCount, setUsersCount] = useState(0);
 
@@ -41,7 +43,6 @@ const AdminOverview = () => {
   const token = localStorage.getItem("token");
 
   const fetchDashboardData = async () => {
-    setLoading(true);
     try {
       const [prodsData, ordersData, usersRes] = await Promise.allSettled([
         getAllProducts(),
@@ -55,7 +56,9 @@ const AdminOverview = () => {
         const pList = Array.isArray(prodsData.value)
           ? prodsData.value
           : prodsData.value?.products || [];
-        setProducts(pList);
+        if (pList.length > 0) {
+          setProducts(pList);
+        }
       }
 
       if (ordersData.status === "fulfilled") {
