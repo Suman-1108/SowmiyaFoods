@@ -1,6 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import axiosInstance from '../api/axiosInstance'
 
+const defaultQueryOptions = {
+  retry: 1,
+  staleTime: 1000 * 60 * 5, // 5 minutes
+  refetchOnWindowFocus: false,
+};
+
 // Consolidated home page data (latest + trending in one call)
 export const useHomeProducts = () => {
   return useQuery({
@@ -9,6 +15,7 @@ export const useHomeProducts = () => {
       const res = await axiosInstance.get('/products/home')
       return res.data // { latestProducts: [...], trendingProducts: [...] }
     },
+    ...defaultQueryOptions,
   })
 }
 
@@ -20,6 +27,7 @@ export const useLatestProducts = () => {
       const res = await axiosInstance.get('/products/latest')
       return Array.isArray(res.data) ? res.data : []
     },
+    ...defaultQueryOptions,
   })
 }
 
@@ -31,6 +39,7 @@ export const useTrendingProducts = () => {
       const res = await axiosInstance.get('/products/trending')
       return Array.isArray(res.data) ? res.data : []
     },
+    ...defaultQueryOptions,
   })
 }
 
@@ -43,6 +52,7 @@ export const useProductById = (id) => {
       return res.data
     },
     enabled: !!id,
+    ...defaultQueryOptions,
   })
 }
 
@@ -57,6 +67,7 @@ export const useProductsByCategory = (category, search = '') => {
       return res.data
     },
     enabled: !!category,
+    ...defaultQueryOptions,
   })
 }
 
@@ -71,6 +82,7 @@ export const useProductsBySearch = (searchTerm) => {
       return res.data
     },
     enabled: !!searchTerm,
+    ...defaultQueryOptions,
   })
 }
 
@@ -82,5 +94,6 @@ export const useAllProducts = () => {
       const res = await axiosInstance.get('/products')
       return res.data
     },
+    ...defaultQueryOptions,
   })
 }

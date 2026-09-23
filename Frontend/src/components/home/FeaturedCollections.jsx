@@ -77,7 +77,7 @@ const FeaturedCollections = () => {
   const { addToCart } = useCart();
   const cachedData = useRef(getCachedProducts()).current;
   const [products, setProducts] = useState(cachedData?.products || []);
-  const [loading, setLoading] = useState(!cachedData?.products?.length);
+  const [loading, setLoading] = useState(false);
   const [wishlist, setWishlist] = useState({});
   const [notifyProduct, setNotifyProduct] = useState(null);
 

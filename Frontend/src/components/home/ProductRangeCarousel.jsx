@@ -593,23 +593,23 @@ const ProductRangeCarousel = () => {
   const { addToCart } = useCart();
   const { isAdmin, isStaff } = useAuth();
 
-  // Instant 0ms load from localStorage: if cached, NO skeleton is shown!
+  // Instant 0ms load guaranteed by productCache baseline!
   const cachedData = useRef(getCachedProducts()).current;
-  const initialGrouped = cachedData?.products
-    ? processAndGroupProducts(cachedData.products, cachedData.categories)
-    : null;
+  const initialGrouped = processAndGroupProducts(
+    cachedData?.products || [],
+    cachedData?.categories || CANONICAL_CATEGORIES
+  );
 
   const [products, setProducts] = useState(initialGrouped?.processedProducts || []);
   const [categoriesList, setCategoriesList] = useState(initialGrouped?.uniqueCats || CANONICAL_CATEGORIES);
-  const [loading, setLoading] = useState(!initialGrouped);
+  const [loading, setLoading] = useState(false);
   const [groupedProducts, setGroupedProducts] = useState(initialGrouped?.grouped || {});
   const [zoomedImage, setZoomedImage] = useState(null);
   const zoomRef = useRef(null);
 
-  // Fetch live products and categories from database (silent background update if cached)
-  const fetchProducts = useCallback(async (isBackground = false) => {
+  // Fetch live products and categories from database (silent background update)
+  const fetchProducts = useCallback(async () => {
     try {
-      if (!isBackground) setLoading(true);
       const [prodRes, catRes] = await Promise.allSettled([
         axiosInstance.get('/products'),
         axiosInstance.get('/products/categories'),
@@ -635,7 +635,7 @@ const ProductRangeCarousel = () => {
         setGroupedProducts(grouped);
       }
     } catch (error) {
-      console.error("Failed to fetch products for carousel:", error);
+      console.warn("Carousel background refresh (kept cached products):", error?.message);
     } finally {
       setLoading(false);
     }
@@ -643,12 +643,10 @@ const ProductRangeCarousel = () => {
 
   // Initial load and live event listeners for real-time admin sync
   useEffect(() => {
-    // If cached products exist, revalidate silently in the background
-    const hasCache = !!cachedData?.products?.length;
-    fetchProducts(hasCache);
+    fetchProducts();
 
     const handleSync = () => {
-      fetchProducts(false);
+      fetchProducts();
     };
 
     window.addEventListener("inventoryUpdated", handleSync);
@@ -657,7 +655,7 @@ const ProductRangeCarousel = () => {
       window.removeEventListener("inventoryUpdated", handleSync);
       window.removeEventListener("categoriesUpdated", handleSync);
     };
-  }, [fetchProducts, cachedData]);
+  }, [fetchProducts]);
 
   // Handle zoom modal
   const openZoom = useCallback((product) => {

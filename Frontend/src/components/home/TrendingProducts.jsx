@@ -201,7 +201,7 @@ const TrendingProducts = () => {
       </section>
     );
   }
-  if (error)
+  if (error && products.length === 0)
     return (
       <p className="text-center mt-10 text-red-500">{error.message || "Failed to fetch products"}</p>
     );

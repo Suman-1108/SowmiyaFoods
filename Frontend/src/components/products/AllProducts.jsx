@@ -29,7 +29,7 @@ import { getCachedProducts, setCachedProducts } from "../../utils/productCache";
 const AllProducts = () => {
   const cachedData = useRef(getCachedProducts()).current;
   const [products, setProducts] = useState(cachedData?.products || []);
-  const [loading, setLoading] = useState(!cachedData?.products?.length);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   // Filters State
@@ -60,24 +60,20 @@ const AllProducts = () => {
     }
   }, [searchParams]);
 
-  // Fetch all products from API
+  // Fetch all products from API (silent background refresh)
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     const fetchProducts = async () => {
       try {
         const res = await axiosInstance.get("/products");
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          setProducts(res.data);
-          setCachedProducts(res.data);
-        } else if (!cachedData?.products?.length) {
-          setProducts([]);
+        const apiData = Array.isArray(res.data) ? res.data : (res.data?.products || []);
+        if (apiData.length > 0) {
+          setProducts(apiData);
+          setCachedProducts(apiData);
         }
       } catch (err) {
-        console.error("Failed to fetch products", err);
-        if (!cachedData?.products?.length) {
-          setError("Failed to fetch products. Please try again later.");
-        }
+        console.warn("Background product sync notice:", err?.message);
       } finally {
         setLoading(false);
       }
