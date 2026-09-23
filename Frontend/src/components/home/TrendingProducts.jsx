@@ -5,7 +5,7 @@ import ph from "../../assets/image.png";
 import { useHomeProducts } from "../../hooks/useProducts";
 import { useCart } from "../../context/CartContext";
 import toast from "react-hot-toast";
-import { ProductCarouselSkeleton } from "../common/ProductSkeleton";
+import NotifyMeModal from "../products/NotifyMeModal";
 import { getCachedProducts } from "../../utils/productCache";
 
 // Tamil name mapping for categories
@@ -193,7 +193,10 @@ const TrendingProducts = () => {
     return (
       <section className="py-12 bg-white relative">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <ProductCarouselSkeleton count={5} hasHeader={true} title="Trending Products" />
+          <div className="py-12 flex flex-col items-center justify-center">
+            <div className="w-10 h-10 border-4 border-amber-500/20 border-t-amber-600 rounded-full animate-spin mb-3"></div>
+            <p className="text-gray-500 font-medium text-xs sm:text-sm">Loading trending products...</p>
+          </div>
         </div>
       </section>
     );

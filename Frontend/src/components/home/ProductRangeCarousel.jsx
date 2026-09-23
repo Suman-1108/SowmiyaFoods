@@ -8,7 +8,6 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import NotifyMeModal from '../products/NotifyMeModal';
-import { ProductRangeSectionSkeleton } from '../common/ProductSkeleton';
 import { getCachedProducts, setCachedProducts } from '../../utils/productCache';
 
 // Canonical 10-Category Ordering requested by client
@@ -712,7 +711,10 @@ const ProductRangeCarousel = () => {
             </div>
           </div>
 
-          <ProductRangeSectionSkeleton count={2} />
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="w-12 h-12 border-4 border-amber-500/30 border-t-amber-600 rounded-full animate-spin mb-3"></div>
+            <p className="text-[#5D4037] font-semibold text-sm">Loading products...</p>
+          </div>
         </div>
       </section>
     );

@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axiosInstance';
 import { useCart } from '../../context/CartContext';
 import NotifyMeModal from '../products/NotifyMeModal';
-import { ProductCardSkeleton } from '../common/ProductSkeleton';
 import { getCachedProducts, setCachedProducts } from '../../utils/productCache';
 
 // Tamil name mapping for categories
@@ -263,17 +262,11 @@ const FeaturedCollections = () => {
           </div>
         </div>
 
-        {/* Loading Skeleton */}
+        {/* Loading Spinner */}
         {loading ? (
-          <div className="flex gap-4 overflow-hidden py-2">
-            {[...Array(5)].map((_, i) => (
-              <div
-                key={`feat-skel-${i}`}
-                className="flex-shrink-0 w-[205px] sm:w-[220px] md:w-[235px]"
-              >
-                <ProductCardSkeleton />
-              </div>
-            ))}
+          <div className="py-12 flex flex-col items-center justify-center">
+            <div className="w-10 h-10 border-4 border-amber-500/20 border-t-[#e8703b] rounded-full animate-spin mb-3"></div>
+            <p className="text-gray-500 font-medium text-xs sm:text-sm">Loading collections...</p>
           </div>
         ) : products.length === 0 ? (
           <div className="p-8 text-center bg-gray-50 rounded-2xl text-sm text-gray-500">
