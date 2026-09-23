@@ -48,6 +48,34 @@ const PRODUCT_SORT_OPTIONS = [
   { value: "stock_asc", label: "Lowest Stock First" },
 ];
 
+const LEGACY_CATEGORY_MAP = {
+  flour: "Flour Items",
+  "flour items": "Flour Items",
+  maida: "Flour Items",
+  atta: "Flour Items",
+  noodles: "Noodles",
+  "millet noodles": "Noodles",
+  semiya: "Semiya",
+  vermicelli: "Semiya",
+  semia: "Semiya",
+  millet: "Millet",
+  millets: "Millet",
+  "millet products": "Millet",
+  "instant products": "Instant Products",
+  instant: "Instant Products",
+  rava: "Rava Sooji",
+  sooji: "Rava Sooji",
+  "rava sooji": "Rava Sooji",
+  pickles: "Pickles",
+  pickle: "Pickles",
+  thokku: "Thokku",
+  "traditional mix": "Traditional Mix",
+  spices: "Traditional Mix",
+  appalam: "Appalam",
+  puppet: "Appalam",
+  papad: "Appalam",
+};
+
 const AdminProducts = () => {
   const [products, setProducts] = useState([]);
   const [serverCategories, setServerCategories] = useState([]);
@@ -127,11 +155,21 @@ const AdminProducts = () => {
 
   // Collect available unique categories (combining server categories + product categories)
   const categories = useMemo(() => {
-    const set = new Set(serverCategories);
-    products.forEach((p) => {
-      if (p.category) set.add(p.category);
+    const seen = new Set();
+    const result = [];
+    const all = [...serverCategories, ...products.map((p) => p.category)];
+    all.forEach((item) => {
+      if (!item || typeof item !== "string") return;
+      const trimmed = item.trim();
+      if (!trimmed) return;
+      const normalized = LEGACY_CATEGORY_MAP[trimmed.toLowerCase()] || trimmed;
+      const lower = normalized.toLowerCase();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        result.push(normalized);
+      }
     });
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
+    return result.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
   }, [serverCategories, products]);
 
   // Map product counts per category
@@ -139,7 +177,8 @@ const AdminProducts = () => {
     const map = {};
     products.forEach((p) => {
       if (p.category) {
-        map[p.category] = (map[p.category] || 0) + 1;
+        const norm = LEGACY_CATEGORY_MAP[p.category.toLowerCase().trim()] || p.category.trim();
+        map[norm] = (map[norm] || 0) + 1;
       }
     });
     return map;

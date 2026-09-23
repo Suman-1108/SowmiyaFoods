@@ -32,19 +32,35 @@ const DEFAULT_CATEGORIES = [
   "Thokku",
   "Traditional Mix",
   "Appalam",
-  // Legacy categories
-  "FLOUR",
-  "NOODLES",
-  "RAVA",
-  "VERMICELLI",
-  "MILLETS",
-  "Millet Products",
-  "INSTANT PRODUCTS",
-  "spices",
-  "pickles",
-  "Maida",
-  "Sooji"
 ];
+
+const LEGACY_CATEGORY_MAP = {
+  flour: "Flour Items",
+  "flour items": "Flour Items",
+  maida: "Flour Items",
+  atta: "Flour Items",
+  noodles: "Noodles",
+  "millet noodles": "Noodles",
+  semiya: "Semiya",
+  vermicelli: "Semiya",
+  semia: "Semiya",
+  millet: "Millet",
+  millets: "Millet",
+  "millet products": "Millet",
+  "instant products": "Instant Products",
+  instant: "Instant Products",
+  rava: "Rava Sooji",
+  sooji: "Rava Sooji",
+  "rava sooji": "Rava Sooji",
+  pickles: "Pickles",
+  pickle: "Pickles",
+  thokku: "Thokku",
+  "traditional mix": "Traditional Mix",
+  spices: "Traditional Mix",
+  appalam: "Appalam",
+  puppet: "Appalam",
+  papad: "Appalam",
+};
 
 const BulkImportModal = ({
   isOpen,
@@ -64,8 +80,20 @@ const BulkImportModal = ({
   const imageInputRef = useRef(null);
 
   const combinedCategories = useMemo(() => {
-    const set = new Set([...DEFAULT_CATEGORIES, ...availableCategories.filter(Boolean)]);
-    return Array.from(set);
+    const seen = new Set();
+    const result = [];
+    [...DEFAULT_CATEGORIES, ...availableCategories.filter(Boolean)].forEach((c) => {
+      if (!c || typeof c !== "string") return;
+      const trimmed = c.trim();
+      if (!trimmed) return;
+      const normalized = LEGACY_CATEGORY_MAP[trimmed.toLowerCase()] || trimmed;
+      const lower = normalized.toLowerCase();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        result.push(normalized);
+      }
+    });
+    return result;
   }, [availableCategories]);
 
   // --- VALIDATION STATS ---

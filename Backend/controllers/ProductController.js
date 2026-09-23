@@ -680,24 +680,61 @@ const INITIAL_DEFAULT_CATEGORIES = [
   "Thokku",
   "Traditional Mix",
   "Appalam",
-  "FLOUR",
-  "NOODLES",
-  "RAVA",
-  "VERMICELLI",
-  "MILLETS",
-  "Millet Products",
-  "INSTANT PRODUCTS",
-  "spices",
-  "Maida",
-  "Sooji",
 ];
+
+const LEGACY_CATEGORY_MAP = {
+  flour: "Flour Items",
+  "flour items": "Flour Items",
+  maida: "Flour Items",
+  atta: "Flour Items",
+  noodles: "Noodles",
+  "millet noodles": "Noodles",
+  semiya: "Semiya",
+  vermicelli: "Semiya",
+  semia: "Semiya",
+  millet: "Millet",
+  millets: "Millet",
+  "millet products": "Millet",
+  "instant products": "Instant Products",
+  instant: "Instant Products",
+  rava: "Rava Sooji",
+  sooji: "Rava Sooji",
+  "rava sooji": "Rava Sooji",
+  pickles: "Pickles",
+  pickle: "Pickles",
+  thokku: "Thokku",
+  "traditional mix": "Traditional Mix",
+  spices: "Traditional Mix",
+  appalam: "Appalam",
+  puppet: "Appalam",
+  papad: "Appalam",
+};
 
 // @desc Get all unique categories (from Category collection + existing products)
 export const getAllCategories = async (req, res) => {
   try {
+    // Clean up any legacy ALL-CAPS / duplicate records in Category collection
+    await Category.deleteMany({
+      name: {
+        $in: [
+          "FLOUR",
+          "NOODLES",
+          "RAVA",
+          "VERMICELLI",
+          "MILLETS",
+          "Millet Products",
+          "INSTANT PRODUCTS",
+          "spices",
+          "pickles",
+          "Maida",
+          "Sooji",
+        ],
+      },
+    }).catch(() => {});
+
     const count = await Category.countDocuments();
     if (count === 0) {
-      // Seed initial default categories into Category collection
+      // Seed initial 10 default categories into Category collection
       const docs = INITIAL_DEFAULT_CATEGORIES.map((name) => ({ name }));
       await Category.insertMany(docs, { ordered: false }).catch(() => {});
     }
@@ -715,10 +752,12 @@ export const getAllCategories = async (req, res) => {
       if (!name || typeof name !== "string") continue;
       const trimmed = name.trim();
       if (!trimmed) continue;
-      const lower = trimmed.toLowerCase();
+      // Normalize legacy/ALL-CAPS duplicates into clean Title Case
+      const normalized = LEGACY_CATEGORY_MAP[trimmed.toLowerCase()] || trimmed;
+      const lower = normalized.toLowerCase();
       if (!seen.has(lower)) {
         seen.add(lower);
-        result.push(trimmed);
+        result.push(normalized);
       }
     }
 

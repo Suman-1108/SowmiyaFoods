@@ -30,18 +30,52 @@ const DEFAULT_CATEGORIES = [
   "Thokku",
   "Traditional Mix",
   "Appalam",
-  "FLOUR",
-  "NOODLES",
-  "RAVA",
-  "VERMICELLI",
-  "MILLETS",
-  "Millet Products",
-  "INSTANT PRODUCTS",
-  "spices",
-  "pickles",
-  "Maida",
-  "Sooji",
 ];
+
+const LEGACY_CATEGORY_MAP = {
+  flour: "Flour Items",
+  "flour items": "Flour Items",
+  maida: "Flour Items",
+  atta: "Flour Items",
+  noodles: "Noodles",
+  "millet noodles": "Noodles",
+  semiya: "Semiya",
+  vermicelli: "Semiya",
+  semia: "Semiya",
+  millet: "Millet",
+  millets: "Millet",
+  "millet products": "Millet",
+  "instant products": "Instant Products",
+  instant: "Instant Products",
+  rava: "Rava Sooji",
+  sooji: "Rava Sooji",
+  "rava sooji": "Rava Sooji",
+  pickles: "Pickles",
+  pickle: "Pickles",
+  thokku: "Thokku",
+  "traditional mix": "Traditional Mix",
+  spices: "Traditional Mix",
+  appalam: "Appalam",
+  puppet: "Appalam",
+  papad: "Appalam",
+};
+
+const normalizeCategoryList = (rawList) => {
+  const seen = new Set();
+  const result = [];
+  (rawList || []).forEach((item) => {
+    if (!item || typeof item !== "string") return;
+    const trimmed = item.trim();
+    if (!trimmed) return;
+    const normalized = LEGACY_CATEGORY_MAP[trimmed.toLowerCase()] || trimmed;
+    const lower = normalized.toLowerCase();
+    if (!seen.has(lower)) {
+      seen.add(lower);
+      result.push(normalized);
+    }
+  });
+  return result;
+};
 
 const ProductModal = ({ isOpen, onClose, onSave, editingProduct, availableCategories = [] }) => {
   const [formData, setFormData] = useState({
@@ -62,7 +96,7 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct, availableCatego
 
   // Dynamic Category Management states
   const [categories, setCategories] = useState(() =>
-    Array.from(new Set([...DEFAULT_CATEGORIES, ...availableCategories.filter(Boolean)]))
+    normalizeCategoryList([...DEFAULT_CATEGORIES, ...availableCategories.filter(Boolean)])
   );
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [isManagingCategories, setIsManagingCategories] = useState(false);
@@ -78,12 +112,14 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct, availableCatego
     try {
       const data = await getAllCategories();
       const list = Array.isArray(data) ? data : [];
-      const merged = Array.from(
-        new Set([...DEFAULT_CATEGORIES, ...availableCategories.filter(Boolean), ...list])
-      );
-      setCategories(merged);
+      const base =
+        list.length > 0
+          ? list
+          : [...DEFAULT_CATEGORIES, ...availableCategories.filter(Boolean)];
+      setCategories(normalizeCategoryList(base));
     } catch (err) {
       console.error("Error fetching categories:", err);
+      setCategories((prev) => normalizeCategoryList(prev));
     } finally {
       setLoadingCategories(false);
     }
