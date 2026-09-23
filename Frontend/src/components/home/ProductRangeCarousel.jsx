@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ShoppingCart, Zap, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import corouselbg from '../../assets/c-bg.png';
 import ph from '../../assets/image.png';
 import axiosInstance from '../../api/axiosInstance';
 import { useCart } from '../../context/CartContext';
@@ -1137,7 +1136,7 @@ const ProductRangeCarousel = () => {
 
   if (loading) {
     return (
-      <section className="py-16 relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${corouselbg})` }}>
+      <section className="py-16 relative overflow-hidden bg-gradient-to-b from-[#FFFDF8] via-[#FAF6ED] to-[#FFF9F2]">
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-12">
             <p className="text-[#5D4037] text-sm font-medium mb-2">எங்கள் தயாரிப்புகள்</p>
@@ -1182,10 +1181,7 @@ const ProductRangeCarousel = () => {
   return (
     <section
       id="our-product-range"
-      className="pt-16 pb-24 md:pb-32 relative overflow-hidden bg-cover bg-center bg-no-repeat scroll-mt-20"
-      style={{
-        backgroundImage: `url(${corouselbg})`,
-      }}
+      className="pt-16 pb-24 md:pb-32 relative overflow-hidden bg-gradient-to-b from-[#FFFDF8] via-[#FAF6ED] to-[#FFF9F2] scroll-mt-20"
     >
       {/* ========================================================= */}
       {/* Seamless Moving Background Pattern (Continuous Motion) */}
