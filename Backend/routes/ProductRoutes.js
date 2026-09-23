@@ -12,6 +12,8 @@ import {
   updateProduct,       // ✅ new (Admin / Staff)
   deleteProduct,       // ✅ new (Admin / Staff)
   getAllCategories,    // ✅ new
+  createCategory,      // ✅ create category
+  deleteCategory,      // ✅ delete category
   updateProductStock,  // ✅ new (Stock update)
   getLowStockAlerts,   // ✅ new (Stock alerts)
   requestStockNotification, // ✅ customer notify me
@@ -29,6 +31,10 @@ const router = express.Router();
 router.get("/", getProducts);
 router.get("/home", getHomeProducts);
 router.get("/categories", getAllCategories);
+router.post("/categories", requirePermission("products:create"), createCategory);
+router.delete("/categories", requirePermission("products:delete"), deleteCategory);
+router.post("/categories/delete", requirePermission("products:delete"), deleteCategory);
+router.delete("/categories/:name", requirePermission("products:delete"), deleteCategory);
 router.get("/latest", getLatestProducts);
 router.get("/trending", getTrendingProducts);
 router.get("/category/:category", getProductsByCategory);

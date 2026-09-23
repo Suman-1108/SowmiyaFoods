@@ -37,6 +37,25 @@ export const fetchProductsBySearch = async (searchTerm) => {
   }
 };
 
+// Category APIs
+export const getAllCategories = async () => {
+  const response = await axiosInstance.get("/products/categories");
+  return response.data;
+};
+
+export const createCategory = async (name, description = "") => {
+  const response = await axiosInstance.post("/products/categories", { name, description });
+  return response.data;
+};
+
+export const deleteCategory = async (name, targetCategory = "General") => {
+  const response = await axiosInstance.post("/products/categories/delete", {
+    name,
+    targetCategory,
+  });
+  return response.data;
+};
+
 // Admin Product APIs
 export const getAllProducts = async () => {
   const response = await axiosInstance.get("/products");

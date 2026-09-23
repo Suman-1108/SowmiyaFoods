@@ -18,6 +18,14 @@ export const updateOrderStatus = async (id, { status, trackingNumber }, token) =
   return data;
 };
 
+// Delete order by ID (Admin)
+export const deleteOrder = async (id, token) => {
+  const { data } = await axiosInstance.delete(`/orders/admin/${id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return data;
+};
+
 // Get single order by ID (Admin)
 export const getOrderById = async (id, token) => {
   const { data } = await axiosInstance.get(`/orders/admin/${id}`, {

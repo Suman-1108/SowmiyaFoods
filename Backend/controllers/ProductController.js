@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Product from "../models/Product.js";
+import Category from "../models/Category.js";
 import StockNotification from "../models/StockNotification.js";
 import Review from "../models/Review.js";
 import cloudinary from "../config/cloudinaryConfig.js";
@@ -668,35 +669,148 @@ export const dismissCustomerAlert = async (req, res) => {
   }
 };
 
-// @desc Get all unique categories
+const INITIAL_DEFAULT_CATEGORIES = [
+  "Millet",
+  "Instant Products",
+  "Noodles",
+  "Semiya",
+  "Flour Items",
+  "Rava Sooji",
+  "Pickles",
+  "Thokku",
+  "Traditional Mix",
+  "Appalam",
+  "FLOUR",
+  "NOODLES",
+  "RAVA",
+  "VERMICELLI",
+  "MILLETS",
+  "Millet Products",
+  "INSTANT PRODUCTS",
+  "spices",
+  "Maida",
+  "Sooji",
+];
+
+// @desc Get all unique categories (from Category collection + existing products)
 export const getAllCategories = async (req, res) => {
   try {
-    // Use aggregation pipeline to safely get distinct non-empty categories
-    const categories = await Product.aggregate([
-      {
-        $match: {
-          category: { $exists: true, $ne: null, $ne: "" }
-        }
-      },
-      {
-        $group: { _id: "$category" }
-      },
-      {
-        $sort: { _id: 1 }
-      },
-      {
-        $project: { _id: 0, category: "$_id" }
-      }
+    const count = await Category.countDocuments();
+    if (count === 0) {
+      // Seed initial default categories into Category collection
+      const docs = INITIAL_DEFAULT_CATEGORIES.map((name) => ({ name }));
+      await Category.insertMany(docs, { ordered: false }).catch(() => {});
+    }
+
+    const [dbCategories, productCategories] = await Promise.all([
+      Category.find().sort({ name: 1 }).lean(),
+      Product.distinct("category", { category: { $exists: true, $ne: null, $ne: "" } }),
     ]);
-    
-    const validCategories = categories
-      .map(c => c.category)
-      .filter(cat => cat != null && cat !== "" && cat.trim() !== "");
-    
-    res.status(200).json(validCategories);
+
+    const categoryNamesFromDb = dbCategories.map((c) => c.name);
+    const seen = new Set();
+    const result = [];
+
+    for (const name of [...categoryNamesFromDb, ...productCategories]) {
+      if (!name || typeof name !== "string") continue;
+      const trimmed = name.trim();
+      if (!trimmed) continue;
+      const lower = trimmed.toLowerCase();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        result.push(trimmed);
+      }
+    }
+
+    // Sort alphabetically
+    result.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+    res.status(200).json(result);
   } catch (error) {
     console.error("Error fetching categories:", error);
     res.status(500).json({ message: "Failed to fetch categories" });
+  }
+};
+
+// @desc Create a new category (Admin / Staff)
+export const createCategory = async (req, res) => {
+  try {
+    const { name, description } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: "Category name is required" });
+    }
+
+    const trimmedName = name.trim();
+
+    // Check if already exists (case-insensitive)
+    const existing = await Category.findOne({
+      name: { $regex: new RegExp(`^${trimmedName}$`, "i") },
+    });
+
+    if (existing) {
+      return res.status(200).json({
+        message: "Category already exists",
+        category: existing.name,
+      });
+    }
+
+    const newCat = await Category.create({
+      name: trimmedName,
+      description: (description || "").trim(),
+    });
+
+    res.status(201).json({
+      message: "Category created successfully",
+      category: newCat.name,
+    });
+  } catch (error) {
+    console.error("Error creating category:", error);
+    res.status(500).json({ message: "Failed to create category", error: error.message });
+  }
+};
+
+// @desc Delete a category (Admin / Staff) and move linked products to targetCategory
+export const deleteCategory = async (req, res) => {
+  try {
+    const rawName = req.params.name || req.body.name || req.query.name;
+    if (!rawName || !String(rawName).trim()) {
+      return res.status(400).json({ message: "Category name is required" });
+    }
+
+    const categoryName = decodeURIComponent(String(rawName)).trim();
+    const rawTarget = req.body.targetCategory || req.query.targetCategory;
+    const targetCategory =
+      rawTarget && String(rawTarget).trim() ? String(rawTarget).trim() : "General";
+
+    // Safe regex escape helper
+    const escapedName = categoryName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    // Delete from Category collection
+    await Category.deleteMany({
+      name: { $regex: new RegExp(`^${escapedName}$`, "i") },
+    });
+
+    // Reassign products with this category to targetCategory
+    const updateResult = await Product.updateMany(
+      { category: { $regex: new RegExp(`^${escapedName}$`, "i") } },
+      { $set: { category: targetCategory } }
+    );
+
+    const affected = updateResult.modifiedCount || 0;
+    const message =
+      affected > 0
+        ? `Category "${categoryName}" deleted. ${affected} product${affected === 1 ? "" : "s"} moved to "${targetCategory}".`
+        : `Category "${categoryName}" deleted successfully.`;
+
+    res.status(200).json({
+      success: true,
+      message,
+      affectedProducts: affected,
+      targetCategory,
+    });
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    res.status(500).json({ message: "Failed to delete category", error: error.message });
   }
 };
 

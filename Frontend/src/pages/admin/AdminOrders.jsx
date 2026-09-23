@@ -31,9 +31,10 @@ import {
   FileText,
   Boxes,
   TrendingUp,
+  Trash2,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { getAllOrders, updateOrderStatus } from "../../api/orderApi";
+import { getAllOrders, updateOrderStatus, deleteOrder } from "../../api/orderApi";
 import TableSortControl from "../../components/admin/TableSortControl";
 
 const ORDER_SORT_OPTIONS = [
@@ -93,11 +94,35 @@ const AdminOrders = () => {
   // Selected Order for Detail Modal
   const [viewingOrder, setViewingOrder] = useState(null);
 
+  // Delete Order Confirmation State
+  const [deletingOrder, setDeletingOrder] = useState(null);
+  const [isDeletingOrder, setIsDeletingOrder] = useState(false);
+
   // Copy helper feedback state
   const [copiedKey, setCopiedKey] = useState(null);
 
   const printRef = useRef(null);
   const token = localStorage.getItem("token");
+
+  const handleConfirmDeleteOrder = async () => {
+    if (!deletingOrder) return;
+    setIsDeletingOrder(true);
+    try {
+      await deleteOrder(deletingOrder._id, token);
+      const displayId = deletingOrder.orderId || `#ORD-${deletingOrder._id?.slice(-6).toUpperCase()}`;
+      toast.success(`Order ${displayId} deleted successfully`);
+      setOrders((prev) => prev.filter((o) => o._id !== deletingOrder._id));
+      if (viewingOrder?._id === deletingOrder._id) {
+        setViewingOrder(null);
+      }
+      setDeletingOrder(null);
+    } catch (err) {
+      console.error("Delete order failed:", err);
+      toast.error(err.response?.data?.message || "Failed to delete order");
+    } finally {
+      setIsDeletingOrder(false);
+    }
+  };
 
   const fetchOrdersList = async () => {
     setLoading(true);
@@ -828,6 +853,13 @@ const AdminOrders = () => {
                             <Eye className="w-3.5 h-3.5" />
                             <span>Details</span>
                           </button>
+                          <button
+                            onClick={() => setDeletingOrder(order)}
+                            className="inline-flex items-center gap-1 p-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition cursor-pointer"
+                            title="Delete Order"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -887,6 +919,15 @@ const AdminOrders = () => {
                   >
                     <Printer className="w-3.5 h-3.5" />
                     <span>Print Invoice</span>
+                  </button>
+
+                  <button
+                    onClick={() => setDeletingOrder(viewingOrder)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition cursor-pointer"
+                    title="Delete this order"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete</span>
                   </button>
 
                   <button
@@ -1252,6 +1293,57 @@ const AdminOrders = () => {
                   className="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition cursor-pointer shadow-xs"
                 >
                   Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Order Confirmation Modal */}
+      {deletingOrder && (
+        <div className="fixed inset-0 z-60 overflow-y-auto">
+          <div
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-2xs transition-opacity"
+            onClick={() => setDeletingOrder(null)}
+          />
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center z-10 animate-in fade-in zoom-in-95 duration-150">
+              <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 mx-auto flex items-center justify-center mb-3">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <h4 className="text-base font-bold text-slate-900">Delete Order?</h4>
+              <p className="text-xs text-slate-500 mt-1">
+                Are you sure you want to permanently delete order{" "}
+                <span className="font-bold font-mono text-slate-800">
+                  {deletingOrder.orderId || `#ORD-${deletingOrder._id?.slice(-6).toUpperCase()}`}
+                </span>
+                ? Customer:{" "}
+                <span className="font-semibold text-slate-800">
+                  {getCustomerInfo(deletingOrder).name}
+                </span>{" "}
+                (₹{Number(deletingOrder.totalAmount || deletingOrder.amount || 0).toFixed(2)}).
+              </p>
+              <p className="text-[11px] text-rose-600 font-semibold mt-2">
+                This action is permanent and cannot be undone.
+              </p>
+
+              <div className="mt-5 flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeletingOrder(null)}
+                  disabled={isDeletingOrder}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDeleteOrder}
+                  disabled={isDeletingOrder}
+                  className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-md transition cursor-pointer disabled:opacity-60"
+                >
+                  {isDeletingOrder ? "Deleting..." : "Yes, Delete Order"}
                 </button>
               </div>
             </div>
