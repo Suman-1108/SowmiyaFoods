@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Search,
   X,
@@ -25,10 +25,12 @@ import Footer from "../Footer";
 import NotifyMeModal from "./NotifyMeModal";
 import { ProductGridSkeleton } from "../common/ProductSkeleton";
 import ProductFilterSidebar from "./ProductFilterSidebar";
+import { getCachedProducts, setCachedProducts } from "../../utils/productCache";
 
 const AllProducts = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cachedData = useRef(getCachedProducts()).current;
+  const [products, setProducts] = useState(cachedData?.products || []);
+  const [loading, setLoading] = useState(!cachedData?.products?.length);
   const [error, setError] = useState(null);
 
   // Filters State
@@ -66,14 +68,17 @@ const AllProducts = () => {
     const fetchProducts = async () => {
       try {
         const res = await axiosInstance.get("/products");
-        if (Array.isArray(res.data)) {
+        if (Array.isArray(res.data) && res.data.length > 0) {
           setProducts(res.data);
-        } else {
+          setCachedProducts(res.data);
+        } else if (!cachedData?.products?.length) {
           setProducts([]);
         }
       } catch (err) {
         console.error("Failed to fetch products", err);
-        setError("Failed to fetch products. Please try again later.");
+        if (!cachedData?.products?.length) {
+          setError("Failed to fetch products. Please try again later.");
+        }
       } finally {
         setLoading(false);
       }

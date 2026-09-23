@@ -6,6 +6,7 @@ import axiosInstance from '../../api/axiosInstance';
 import { useCart } from '../../context/CartContext';
 import NotifyMeModal from '../products/NotifyMeModal';
 import { ProductCardSkeleton } from '../common/ProductSkeleton';
+import { getCachedProducts, setCachedProducts } from '../../utils/productCache';
 
 // Tamil name mapping for categories
 const categoryTamilNames = {
@@ -75,8 +76,9 @@ const getTamilName = (name = "", category = "") => {
 const FeaturedCollections = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cachedData = useRef(getCachedProducts()).current;
+  const [products, setProducts] = useState(cachedData?.products || []);
+  const [loading, setLoading] = useState(!cachedData?.products?.length);
   const [wishlist, setWishlist] = useState({});
   const [notifyProduct, setNotifyProduct] = useState(null);
 
@@ -96,8 +98,9 @@ const FeaturedCollections = () => {
       try {
         const res = await axiosInstance.get('/products');
         const data = Array.isArray(res.data) ? res.data : (res.data?.products || []);
-        if (isMounted) {
+        if (isMounted && data.length > 0) {
           setProducts(data);
+          setCachedProducts(data);
         }
       } catch (err) {
         console.error("Failed to fetch dynamic featured collections:", err);

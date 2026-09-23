@@ -40,6 +40,7 @@ import brandLogo from "../../assets/logo.png";
 import toast from "react-hot-toast";
 import NotifyMeModal from "./NotifyMeModal";
 import { ProductDetailSkeleton } from "../common/ProductSkeleton";
+import { getCachedProductById } from "../../utils/productCache";
 
 // Tamil slogan / subtitle helper
 const getTamilSlogan = (name = "") => {
@@ -79,8 +80,9 @@ const getTamilSlogan = (name = "") => {
 
 const ProductDetails = () => {
   const { id } = useParams();
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const cachedProduct = useRef(getCachedProductById(id)).current;
+  const [product, setProduct] = useState(cachedProduct || null);
+  const [loading, setLoading] = useState(!cachedProduct);
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -281,7 +283,7 @@ const ProductDetails = () => {
     setSelectedImageIndex(0);
 
     const fetchProduct = async () => {
-      setLoading(true);
+      if (!cachedProduct) setLoading(true);
       try {
         const data = await getProductById(id);
         const productWithLinks = {

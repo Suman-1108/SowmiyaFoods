@@ -5,8 +5,8 @@ import ph from "../../assets/image.png";
 import { useHomeProducts } from "../../hooks/useProducts";
 import { useCart } from "../../context/CartContext";
 import toast from "react-hot-toast";
-import NotifyMeModal from "../products/NotifyMeModal";
 import { ProductCarouselSkeleton } from "../common/ProductSkeleton";
+import { getCachedProducts } from "../../utils/productCache";
 
 // Tamil name mapping for categories
 const categoryTamilNames = {
@@ -103,8 +103,11 @@ const TrendingProducts = () => {
   const [wishlist, setWishlist] = useState({});
   const [notifyProduct, setNotifyProduct] = useState(null);
 
+  const cachedData = useRef(getCachedProducts()).current;
   const { data, isLoading, error } = useHomeProducts();
-  const products = data?.trendingProducts || [];
+  const products = (data?.trendingProducts && data.trendingProducts.length > 0)
+    ? data.trendingProducts
+    : (cachedData?.products?.slice(0, 8) || []);
 
   const processedProducts = products.map(product => ({
     ...product,
@@ -186,7 +189,7 @@ const TrendingProducts = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading && products.length === 0) {
     return (
       <section className="py-12 bg-white relative">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

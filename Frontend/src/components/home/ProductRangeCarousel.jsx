@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import NotifyMeModal from '../products/NotifyMeModal';
 import { ProductRangeSectionSkeleton } from '../common/ProductSkeleton';
+import { getCachedProducts, setCachedProducts } from '../../utils/productCache';
 
 // Canonical 10-Category Ordering requested by client
 export const CANONICAL_CATEGORIES = [
@@ -414,6 +415,8 @@ const CategoryCarouselSection = ({
                   <img
                     src={dynamicImg}
                     alt={displayTitle}
+                    loading={pIdx < 4 ? "eager" : "lazy"}
+                    decoding="async"
                     className="w-full h-full object-contain mix-blend-multiply group-hover:scale-106 transition-transform duration-300"
                     onError={(e) => {
                       e.currentTarget.onerror = null;
@@ -540,21 +543,74 @@ const CategoryCarouselSection = ({
   );
 };
 
+// Helper to process raw products and group by category
+const processAndGroupProducts = (apiProducts = [], serverCats = []) => {
+  const uniqueCats = Array.from(
+    new Set([...CANONICAL_CATEGORIES, ...serverCats, ...apiProducts.map(p => p.category).filter(Boolean)])
+  );
+
+  const processedProducts = apiProducts.map((p) => {
+    const canonicalCat = normalizeCategory(p.category, p.name);
+    return {
+      ...p,
+      category: canonicalCat,
+      originalCategory: p.category,
+      tamilName: p.tamilName || getTamilName(p.name, canonicalCat),
+      tamilSlogan: p.tamilSlogan || getTamilSlogan(p.name, canonicalCat),
+      packagingType:
+        p.packagingType ||
+        (isPackPresentation(p) ? "pack" : isBottlePresentation(p) ? "bottle" : undefined),
+    };
+  });
+
+  const grouped = {};
+  uniqueCats.forEach((cat) => {
+    grouped[cat] = [];
+  });
+
+  processedProducts.forEach((product) => {
+    const cat = product.category;
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(product);
+  });
+
+  ["Pickles", "Thokku"].forEach((catKey) => {
+    if (grouped[catKey]) {
+      grouped[catKey].sort((a, b) => {
+        const aIsBottle = isBottlePresentation(a);
+        const bIsBottle = isBottlePresentation(b);
+        if (aIsBottle && !bIsBottle) return -1;
+        if (!aIsBottle && bIsBottle) return 1;
+        return 0;
+      });
+    }
+  });
+
+  return { uniqueCats, processedProducts, grouped };
+};
+
 const ProductRangeCarousel = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { isAdmin, isStaff } = useAuth();
-  const [products, setProducts] = useState([]);
-  const [categoriesList, setCategoriesList] = useState(CANONICAL_CATEGORIES);
-  const [loading, setLoading] = useState(true);
-  const [groupedProducts, setGroupedProducts] = useState({});
+
+  // Instant 0ms load from localStorage: if cached, NO skeleton is shown!
+  const cachedData = useRef(getCachedProducts()).current;
+  const initialGrouped = cachedData?.products
+    ? processAndGroupProducts(cachedData.products, cachedData.categories)
+    : null;
+
+  const [products, setProducts] = useState(initialGrouped?.processedProducts || []);
+  const [categoriesList, setCategoriesList] = useState(initialGrouped?.uniqueCats || CANONICAL_CATEGORIES);
+  const [loading, setLoading] = useState(!initialGrouped);
+  const [groupedProducts, setGroupedProducts] = useState(initialGrouped?.grouped || {});
   const [zoomedImage, setZoomedImage] = useState(null);
   const zoomRef = useRef(null);
 
-  // Fetch live products and categories from database
-  const fetchProducts = useCallback(async () => {
+  // Fetch live products and categories from database (silent background update if cached)
+  const fetchProducts = useCallback(async (isBackground = false) => {
     try {
-      setLoading(true);
+      if (!isBackground) setLoading(true);
       const [prodRes, catRes] = await Promise.allSettled([
         axiosInstance.get('/products'),
         axiosInstance.get('/products/categories'),
@@ -570,57 +626,15 @@ const ProductRangeCarousel = () => {
           ? catRes.value.data
           : [];
 
-      // Determine canonical order plus any new custom categories
-      const uniqueCats = Array.from(
-        new Set([...CANONICAL_CATEGORIES, ...serverCats, ...apiProducts.map(p => p.category).filter(Boolean)])
-      );
-      setCategoriesList(uniqueCats);
+      if (apiProducts.length > 0) {
+        // Save fresh data into localStorage cache for all pages
+        setCachedProducts(apiProducts, serverCats);
 
-      // Process live products
-      const processedProducts = apiProducts.map((p) => {
-        const canonicalCat = normalizeCategory(p.category, p.name);
-        return {
-          ...p,
-          category: canonicalCat,
-          originalCategory: p.category,
-          tamilName: p.tamilName || getTamilName(p.name, canonicalCat),
-          tamilSlogan: p.tamilSlogan || getTamilSlogan(p.name, canonicalCat),
-          packagingType:
-            p.packagingType ||
-            (isPackPresentation(p) ? "pack" : isBottlePresentation(p) ? "bottle" : undefined),
-        };
-      });
-
-      setProducts(processedProducts);
-
-      // Group products into categories
-      const grouped = {};
-      uniqueCats.forEach((cat) => {
-        grouped[cat] = [];
-      });
-
-      processedProducts.forEach((product) => {
-        const cat = product.category;
-        if (!grouped[cat]) {
-          grouped[cat] = [];
-        }
-        grouped[cat].push(product);
-      });
-
-      // Pickles & Thokku: Bottle First, Pack Second!
-      ["Pickles", "Thokku"].forEach((catKey) => {
-        if (grouped[catKey]) {
-          grouped[catKey].sort((a, b) => {
-            const aIsBottle = isBottlePresentation(a);
-            const bIsBottle = isBottlePresentation(b);
-            if (aIsBottle && !bIsBottle) return -1;
-            if (!aIsBottle && bIsBottle) return 1;
-            return 0;
-          });
-        }
-      });
-
-      setGroupedProducts(grouped);
+        const { uniqueCats, processedProducts, grouped } = processAndGroupProducts(apiProducts, serverCats);
+        setCategoriesList(uniqueCats);
+        setProducts(processedProducts);
+        setGroupedProducts(grouped);
+      }
     } catch (error) {
       console.error("Failed to fetch products for carousel:", error);
     } finally {
@@ -630,10 +644,12 @@ const ProductRangeCarousel = () => {
 
   // Initial load and live event listeners for real-time admin sync
   useEffect(() => {
-    fetchProducts();
+    // If cached products exist, revalidate silently in the background
+    const hasCache = !!cachedData?.products?.length;
+    fetchProducts(hasCache);
 
     const handleSync = () => {
-      fetchProducts();
+      fetchProducts(false);
     };
 
     window.addEventListener("inventoryUpdated", handleSync);
@@ -642,7 +658,7 @@ const ProductRangeCarousel = () => {
       window.removeEventListener("inventoryUpdated", handleSync);
       window.removeEventListener("categoriesUpdated", handleSync);
     };
-  }, [fetchProducts]);
+  }, [fetchProducts, cachedData]);
 
   // Handle zoom modal
   const openZoom = useCallback((product) => {
