@@ -1,184 +1,198 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, Heart, Star, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { ShoppingCart, Heart, Star, ChevronLeft, ChevronRight, ArrowRight, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import axiosInstance from '../../api/axiosInstance';
+import { useCart } from '../../context/CartContext';
+import ph from '../../assets/image.png';
+import NotifyMeModal from '../products/NotifyMeModal';
 
-// Import real product images from assets
-import bajraFlour from '../../assets/bajra-flour.png';
-import ramarMaitha from '../../assets/maida.jpeg';
-import ramarNoodles from '../../assets/noodles.jpeg';
-import wheatFlour1 from '../../assets/atta.jpeg';
-import ramarBajjiBonda from '../../assets/Ramar Bajji Bonda.jpg.jpeg';
-import ramarElluIdlyPodi from '../../assets/ellupodi.jpeg';
-import ramarIdlyPodi from '../../assets/idlypodi.jpeg';
-import kambuMaavu from '../../assets/sambakurunai.jpeg';
-import ramarMaida from '../../assets/maida.jpeg';
-import ramarMilletPuttu from '../../assets/milletpodi.jpeg';
-import ramarNoodles2 from '../../assets/Ramar Noodles_DZN-1115_1Kg_350x220mm_5.jpg.jpeg';
-import ramarPuliyotharai from '../../assets/onion.png';
-import ramarSambaKothikurunai from '../../assets/sambakurunai.jpeg';
-import idiyappam from '../../assets/idiyappam.jpeg';
-import sambarava from '../../assets/idiyappam.jpeg';
-import ramarUlunthankali from '../../assets/ulunthakali.jpeg';
-import wheatFlour2 from '../../assets/atta.jpeg';
-import ramarWheatFlour3 from '../../assets/atta.jpeg';
+// Tamil name mapping for categories
+const categoryTamilNames = {
+  "Millet": "சிறுதானியம்",
+  "Instant Products": "உடனடி பொருட்கள்",
+  "Noodles": "நூடுல்ஸ்",
+  "Semiya": "சேமியா",
+  "Flour Items": "மாவு வகைகள்",
+  "Rava Sooji": "ரவை & சூஜி",
+  "Pickles": "ஊறுகாய்",
+  "Thokku": "தொக்கு",
+  "Traditional Mix": "பாரம்பரிய மிக்ஸ்",
+  "Appalam": "அப்பளம்",
+  "FLOUR": "மாவு வகைகள்",
+  "NOODLES": "நூடுல்ஸ்",
+  "INSTANT PRODUCTS": "உடனடி பொருட்கள்",
+  "RAVA": "ரவை & சூஜி",
+  "VERMICELLI": "சேமியா",
+  "spices": "பாரம்பரிய மிக்ஸ்",
+  "pickles": "ஊறுகாய்",
+  "Millet Products": "சிறுதானியம்",
+  "Maida": "மாவு வகைகள்",
+  "Sooji": "ரவை & சூஜி",
+  "MILLETS": "சிறுதானியம்",
+  "puppet": "அப்பளம்",
+};
+
+// Get Tamil name for a product
+const getTamilName = (name = "", category = "") => {
+  const lower = (name || "").toLowerCase();
+  if (lower.includes('thokku')) {
+    if (lower.includes('tomato') || lower.includes('thakkali')) return "தக்காளி தொக்கு";
+    if (lower.includes('garlic') || lower.includes('poondu')) return "பூண்டு தொக்கு";
+    if (lower.includes('onion') || lower.includes('vengayam')) return "வெங்காய தொக்கு";
+    return "சுவையான தொக்கு";
+  }
+  if (lower.includes('pickle') || lower.includes('oorugai')) {
+    if (lower.includes('mango') || lower.includes('maangai')) return "மாங்காய் ஊறுகாய்";
+    if (lower.includes('lemon') || lower.includes('elamichai')) return "எலுமிச்சை ஊறுகாய்";
+    if (lower.includes('garlic') || lower.includes('poondu')) return "பூண்டு ஊறுகாய்";
+    return "பாரம்பரிய ஊறுகாய்";
+  }
+  if (lower.includes('millet') && lower.includes('noodles')) return "சிறுதானிய நூடுல்ஸ்";
+  if (lower.includes('millet') && lower.includes('vermicelli')) return "சிறுதானிய சேமியா";
+  if (lower.includes('millet') && (lower.includes('puttu') || lower.includes('dosa'))) return "சிறுதானிய மாவு";
+  if (lower.includes('ragi') && (lower.includes('vermicelli') || lower.includes('semiya'))) return "ராகி சேமியா";
+  if (lower.includes('ragi') && lower.includes('flour')) return "ராகி மாவு";
+  if (lower.includes('bajra') && lower.includes('flour')) return "கம்பு மாவு";
+  if (lower.includes('noodles')) return "நூடுல்ஸ்";
+  if (lower.includes('vermicelli') || lower.includes('semiya')) return "சேமியா";
+  if (lower.includes('atta') || lower.includes('wheat')) return "கோதுமை மாவு";
+  if (lower.includes('maida')) return "மைதா";
+  if (lower.includes('sooji') || lower.includes('rava')) return "ரவை";
+  if (lower.includes('idli podi') || lower.includes('idly podi')) return "இட்லி பொடி";
+  if (lower.includes('ellu podi')) return "எள்ளு இட்லி பொடி";
+  if (lower.includes('puliyotharai') || lower.includes('puliyodharai')) return "புளியோதரை மிக்ஸ்";
+  if (lower.includes('ulundhankali') || lower.includes('ulunthankali')) return "உளுந்தங்களி மிக்ஸ்";
+  if (lower.includes('puttu')) return "புட்டு பொடி";
+  if (lower.includes('idiappam') || lower.includes('idiappa')) return "இடியாப்ப மாவு";
+  if (lower.includes('murukku')) return "முறுக்கு மாவு";
+  if (lower.includes('bajji') || lower.includes('bonda')) return "பஜ்ஜி போண்டா மிக்ஸ்";
+  if (lower.includes('parotta')) return "பரோட்டா மாவு";
+  if (lower.includes('appalam')) return "பாரம்பரிய அப்பளம்";
+  return categoryTamilNames[category] || category || "ராமர் தயாரிப்பு";
+};
 
 const FeaturedCollections = () => {
   const navigate = useNavigate();
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [imageIndices, setImageIndices] = useState({});
+  const { addToCart } = useCart();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [wishlist, setWishlist] = useState({});
+  const [notifyProduct, setNotifyProduct] = useState(null);
+
+  // Slider controls
+  const scrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  // Touch & Drag state
   const touchStartRef = useRef(0);
+  const touchEndRef = useRef(0);
 
-  const collections = [
-    {
-      id: 1,
-      name: "Wheat Flour",
-      category: "Flour",
-      tamilName: "கோதுமை மாவு",
-      quote: "மிருதுவான சப்பாத்திக்கு தரமான கோதுமை மாவு.",
-      images: [wheatFlour1, wheatFlour2],
-      price: 55,
-      mrp: 75,
-      badge: { text: "New", bg: "bg-[#e8703b] text-white" },
-      reviews: 128,
-      link: "/products?category=FLOUR",
-    },
-    {
-      id: 2,
-      name: "Idiyappam Podi",
-      category: "Mixes",
-      tamilName: "இடியாப்ப மாவு",
-      quote: "சுவையான இடியாப்பம், குடும்பத்தின் விருப்பம்!",
-      images: [idiyappam],
-      price: 48,
-      mrp: 65,
-      badge: { text: "New", bg: "bg-[#e8703b] text-white" },
-      reviews: 96,
-      link: "/products?category=INSTANT%20PRODUCTS",
-    },
-    {
-      id: 3,
-      name: "Samba Rava",
-      category: "Rava",
-      tamilName: "சம்பா ரவை",
-      quote: "எளிதில் சமைக்க சுவையான சம்பா கோதுமை குருணை.",
-      images: [ramarSambaKothikurunai],
-      price: 62,
-      mrp: 80,
-      badge: { text: "New", bg: "bg-[#e8703b] text-white" },
-      reviews: 142,
-      link: "/products?category=RAVA",
-    },
-    {
-      id: 4,
-      name: "Kambu Maavu",
-      category: "Millets",
-      tamilName: "கம்பு மாவு",
-      quote: "உடலுக்கு வலிமை கம்பு மாவே!",
-      images: [kambuMaavu],
-      price: 52,
-      mrp: 70,
-      badge: null,
-      reviews: 87,
-      link: "/products?category=Millet%20Products",
-    },
-    {
-      id: 5,
-      name: "Special Noodles",
-      category: "Noodles",
-      tamilName: "நூடுல்ஸ்",
-      quote: "செஃப்பின் விருப்பம்... ராமர் நூடுல்ஸ்!",
-      images: [ramarNoodles2],
-      price: 40,
-      mrp: 55,
-      badge: { text: "New", bg: "bg-[#e8703b] text-white" },
-      reviews: 110,
-      link: "/products?category=NOODLES",
-    },
-    {
-      id: 6,
-      name: "Pure Maida",
-      category: "Flour",
-      tamilName: "மைதா",
-      quote: "மென்மையான மாவு... அற்புதமான சுவை!",
-      images: [ramarMaitha],
-      price: 45,
-      mrp: 60,
-      badge: null,
-      reviews: 78,
-      link: "/products?category=FLOUR",
-    },
-    {
-      id: 7,
-      name: "Idly Podi",
-      category: "Podi",
-      tamilName: "இட்லி பொடி",
-      quote: "இட்லிக்கு இனிய துணை... சுவையின் முழுமை!",
-      images: [ramarIdlyPodi],
-      price: 35,
-      mrp: 50,
-      badge: { text: "New", bg: "bg-[#e8703b] text-white" },
-      reviews: 154,
-      link: "/products?category=spices",
-    },
-    {
-      id: 8,
-      name: "Puliyodharai Mix",
-      category: "Mixes",
-      tamilName: "புளியோதரை மிக்ஸ்",
-      quote: "மணம் கமழும் புளியோதரை... மனம் நிறைக்கும் ருசி!",
-      images: [ramarPuliyotharai],
-      price: 42,
-      mrp: 60,
-      badge: null,
-      reviews: 91,
-      link: "/products?category=INSTANT%20PRODUCTS",
-    },
-    {
-      id: 9,
-      name: "Ulunthankali Mix",
-      category: "Mixes",
-      tamilName: "உளுந்தங்களி மிக்ஸ்",
-      quote: "எலும்புகளுக்கு வலிமை தரும் பாரம்பரிய உணவு!",
-      images: [ramarUlunthankali],
-      price: 58,
-      mrp: 75,
-      badge: { text: "New", bg: "bg-[#e8703b] text-white" },
-      reviews: 64,
-      link: "/products?category=INSTANT%20PRODUCTS",
-    },
-    {
-      id: 10,
-      name: "Bajji Bonda Mix",
-      category: "Mixes",
-      tamilName: "பஜ்ஜி போண்டா மிக்ஸ்",
-      quote: "மொறுமொறு பஜ்ஜி... மனம் கவரும் சுவை!",
-      images: [ramarBajjiBonda],
-      price: 38,
-      mrp: 50,
-      badge: { text: "New", bg: "bg-[#e8703b] text-white" },
-      reviews: 136,
-      link: "/products?category=INSTANT%20PRODUCTS",
-    }
-  ];
-
-  // Auto-rotate images for collections with multiple images
+  // Fetch dynamic products from the API/database
   useEffect(() => {
-    const interval = setInterval(() => {
-      setImageIndices(prev => {
-        const newIndices = { ...prev };
-        collections.forEach(item => {
-          if (item.images.length > 1) {
-            newIndices[item.id] = ((prev[item.id] || 0) + 1) % item.images.length;
-          }
-        });
-        return newIndices;
-      });
-    }, 3000);
-    return () => clearInterval(interval);
+    let isMounted = true;
+    const fetchDynamicProducts = async () => {
+      try {
+        const res = await axiosInstance.get('/products');
+        const data = Array.isArray(res.data) ? res.data : (res.data?.products || []);
+        if (isMounted) {
+          setProducts(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch dynamic featured collections:", err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchDynamicProducts();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
+  // Update arrow button states based on scroll position
+  const checkScrollability = useCallback(() => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    setCanScrollLeft(scrollLeft > 15);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 15);
+  }, []);
+
+  useEffect(() => {
+    checkScrollability();
+    window.addEventListener('resize', checkScrollability);
+    return () => window.removeEventListener('resize', checkScrollability);
+  }, [products, checkScrollability]);
+
+  // Smooth scroll handler for left and right buttons
+  const scroll = (direction) => {
+    if (!scrollRef.current) return;
+    const cardWidth = 240;
+    const scrollAmount = cardWidth * 2;
+    scrollRef.current.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth"
+    });
+    setTimeout(checkScrollability, 350);
+  };
+
+  // Touch handlers for mobile swipe
+  const handleTouchStart = (e) => {
+    touchStartRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!scrollRef.current) return;
+    const diff = touchStartRef.current - touchEndRef.current;
+    const threshold = 50;
+    const cardWidth = 240;
+    if (Math.abs(diff) > threshold) {
+      scrollRef.current.scrollBy({
+        left: diff > 0 ? cardWidth * 1.5 : -cardWidth * 1.5,
+        behavior: 'smooth'
+      });
+      setTimeout(checkScrollability, 350);
+    }
+  };
+
+  // Mouse drag handler for desktop
+  const handleMouseDown = (e) => {
+    if (!scrollRef.current) return;
+    const startX = e.pageX;
+    const scrollLeft = scrollRef.current.scrollLeft;
+    let dragged = false;
+
+    const handleMouseMove = (moveEvent) => {
+      const x = moveEvent.pageX;
+      const walk = (startX - x) * 1.5;
+      scrollRef.current.scrollLeft = scrollLeft + walk;
+      if (Math.abs(startX - x) > 5) dragged = true;
+      checkScrollability();
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      if (dragged) {
+        const preventClick = (ce) => {
+          ce.preventDefault();
+          ce.stopPropagation();
+          document.removeEventListener('click', preventClick, true);
+        };
+        document.addEventListener('click', preventClick, true);
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  // Wishlist toggle handler
   const toggleWishlist = (id, e) => {
     e.stopPropagation();
     setWishlist(prev => {
@@ -190,31 +204,6 @@ const FeaturedCollections = () => {
     });
   };
 
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % Math.max(1, collections.length - 3));
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev === 0 ? collections.length - 4 : prev - 1));
-  };
-
-  const handleTouchStart = (e) => {
-    touchStartRef.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (e) => {
-    const touchEnd = e.changedTouches[0].clientX;
-    const diff = touchStartRef.current - touchEnd;
-    const threshold = 50;
-    if (Math.abs(diff) > threshold) {
-      if (diff > 0) {
-        nextSlide();
-      } else {
-        prevSlide();
-      }
-    }
-  };
-
   return (
     <section className="py-12 bg-white relative">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -224,6 +213,9 @@ const FeaturedCollections = () => {
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
               Featured Collections
             </h2>
+            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+              Explore our best handpicked grocery & pantry staples
+            </p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -234,21 +226,33 @@ const FeaturedCollections = () => {
               <span>View all collections</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
-            {/* Navigation Arrows */}
-            <div className="flex items-center gap-1 ml-2">
+            {/* Navigation Arrows (Working Scroll Controller) */}
+            <div className="flex items-center gap-1.5 ml-2">
               <button
-                onClick={prevSlide}
-                className="w-8 h-8 rounded-full border border-gray-200 hover:bg-gray-100 flex items-center justify-center text-gray-700 transition-colors disabled:opacity-40 cursor-pointer"
-                disabled={currentIndex === 0}
+                type="button"
+                onClick={() => scroll("left")}
+                disabled={!canScrollLeft}
+                className={`w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center transition-all ${
+                  canScrollLeft
+                    ? "hover:bg-amber-50 hover:border-[#e8703b] text-gray-800 hover:text-[#e8703b] cursor-pointer shadow-2xs"
+                    : "opacity-35 cursor-not-allowed text-gray-400 bg-gray-50"
+                }`}
                 aria-label="Previous collections"
+                title="Scroll left"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
-                onClick={nextSlide}
-                className="w-8 h-8 rounded-full border border-gray-200 hover:bg-gray-100 flex items-center justify-center text-gray-700 transition-colors disabled:opacity-40 cursor-pointer"
-                disabled={currentIndex >= collections.length - 4}
+                type="button"
+                onClick={() => scroll("right")}
+                disabled={!canScrollRight}
+                className={`w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center transition-all ${
+                  canScrollRight
+                    ? "hover:bg-amber-50 hover:border-[#e8703b] text-gray-800 hover:text-[#e8703b] cursor-pointer shadow-2xs"
+                    : "opacity-35 cursor-not-allowed text-gray-400 bg-gray-50"
+                }`}
                 aria-label="Next collections"
+                title="Scroll right"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -256,129 +260,193 @@ const FeaturedCollections = () => {
           </div>
         </div>
 
-        {/* Collections Horizontal Track */}
-        <div
-          className="flex gap-4 sm:gap-5 overflow-x-auto scroll-smooth pb-4 px-1"
-          style={{
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            WebkitOverflowScrolling: 'touch'
-          }}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-        >
-          {collections.map((item) => {
-            const isWishlisted = !!wishlist[item.id];
-
-            return (
+        {/* Loading Skeleton */}
+        {loading ? (
+          <div className="flex gap-4 overflow-hidden py-2">
+            {[...Array(5)].map((_, i) => (
               <div
-                key={item.id}
-                className="flex-shrink-0 w-[205px] sm:w-[220px] md:w-[235px] group flex flex-col"
+                key={i}
+                className="flex-shrink-0 w-[205px] sm:w-[220px] md:w-[235px] bg-slate-50 border border-slate-100 rounded-2xl p-4 animate-pulse"
               >
-                <div className="bg-white rounded-2xl border border-gray-200/85 hover:border-gray-300 shadow-xs hover:shadow-md transition-all duration-300 p-3 sm:p-3.5 flex flex-col justify-between h-full">
-                  {/* 1. Square Image Container */}
-                  <div
-                    className="relative w-full aspect-square bg-[#F7F7F7] rounded-xl overflow-hidden mb-3 flex items-center justify-center p-3 cursor-pointer"
-                    onClick={() => navigate(item.link)}
-                  >
-                    {/* Top-Left Badge */}
-                    {item.badge && (
-                      <div className="absolute top-2.5 left-2.5 z-10">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold tracking-wide ${item.badge.bg}`}>
-                          {item.badge.text}
-                        </span>
-                      </div>
-                    )}
+                <div className="w-full aspect-square bg-slate-200 rounded-xl mb-3" />
+                <div className="h-4 bg-slate-200 rounded w-3/4 mb-2" />
+                <div className="h-3 bg-slate-200 rounded w-1/2 mb-3" />
+                <div className="h-8 bg-slate-200 rounded-lg w-full" />
+              </div>
+            ))}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="p-8 text-center bg-gray-50 rounded-2xl text-sm text-gray-500">
+            No collections found.
+          </div>
+        ) : (
+          /* Collections Horizontal Track with scrollRef */
+          <div
+            ref={scrollRef}
+            onScroll={checkScrollability}
+            className="flex gap-4 sm:gap-5 overflow-x-auto scroll-smooth pb-4 px-1 cursor-grab active:cursor-grabbing snap-x snap-mandatory"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
+            onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {products.map((item, idx) => {
+              const pid = item._id || String(idx);
+              const isWishlisted = !!wishlist[pid];
+              const price = Number(item.price) || 0;
+              const mrp = Math.round(price * 1.32) || price + 35;
+              const isOutOfStock =
+                item.inStock === false ||
+                (item.stock !== undefined && Number(item.stock) <= 0);
+              const tamilName = getTamilName(item.name, item.category);
+              const dynamicImage = item.image || ph;
 
-                    {/* Top-Right Heart Icon */}
-                    <button
-                      onClick={(e) => toggleWishlist(item.id, e)}
-                      className="absolute top-2.5 right-2.5 z-10 w-7 h-7 rounded-full bg-white/70 hover:bg-white flex items-center justify-center text-gray-500 hover:text-red-500 transition-colors shadow-2xs"
-                      aria-label="Add to wishlist"
+              // Promotional badge logic
+              const badgeText =
+                idx % 4 === 0 ? "Featured" : idx % 3 === 0 ? "Popular" : idx % 2 === 0 ? "Special" : null;
+
+              return (
+                <div
+                  key={pid}
+                  className="flex-shrink-0 w-[205px] sm:w-[220px] md:w-[235px] snap-start group flex flex-col"
+                >
+                  <div className="bg-white rounded-2xl border border-gray-200/85 hover:border-gray-300 shadow-xs hover:shadow-md transition-all duration-300 p-3 sm:p-3.5 flex flex-col justify-between h-full">
+                    {/* 1. Square Image Container (Dynamic Database/Cloudinary Image) */}
+                    <div
+                      className="relative w-full aspect-square bg-[#F7F7F7] rounded-xl overflow-hidden mb-3 flex items-center justify-center p-3 cursor-pointer"
+                      onClick={() => navigate(`/product/${pid}`)}
                     >
-                      <Heart
-                        className={`w-3.5 h-3.5 transition-colors ${
-                          isWishlisted ? "fill-red-500 text-red-500" : "stroke-[1.8]"
-                        }`}
-                      />
-                    </button>
+                      {/* Top-Left Dynamic Badge */}
+                      {badgeText && (
+                        <div className="absolute top-2.5 left-2.5 z-10">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-[10.5px] font-bold tracking-wide bg-[#e8703b] text-white shadow-2xs">
+                            {badgeText}
+                          </span>
+                        </div>
+                      )}
 
-                    {/* Auto-Rotating Product Image */}
-                    <div className="relative w-full h-full flex items-center justify-center">
-                      {item.images.map((img, idx) => (
-                        <img
-                          key={idx}
-                          src={img}
-                          alt={item.name}
-                          className={`absolute max-h-full max-w-full object-contain mix-blend-multiply transition-all duration-500 ease-out group-hover:scale-106 ${
-                            (imageIndices[item.id] || 0) === idx ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+                      {/* Top-Right Heart Icon */}
+                      <button
+                        type="button"
+                        onClick={(e) => toggleWishlist(pid, e)}
+                        className="absolute top-2.5 right-2.5 z-10 w-7 h-7 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-gray-500 hover:text-red-500 transition-colors shadow-2xs cursor-pointer"
+                        aria-label="Add to wishlist"
+                      >
+                        <Heart
+                          className={`w-3.5 h-3.5 transition-colors ${
+                            isWishlisted ? "fill-red-500 text-red-500" : "stroke-[1.8]"
                           }`}
                         />
-                      ))}
+                      </button>
+
+                      {/* Dynamic Product Image */}
+                      <div className="relative w-full h-full flex items-center justify-center">
+                        <img
+                          src={dynamicImage}
+                          alt={item.name}
+                          className="max-h-full max-w-full object-contain mix-blend-multiply transition-transform duration-500 ease-out group-hover:scale-106"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = ph;
+                          }}
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  {/* 2. Text Details */}
-                  <div className="flex flex-col flex-grow">
-                    {/* Collection Title */}
-                    <h3
-                      onClick={() => navigate(item.link)}
-                      className="font-semibold text-gray-900 text-[13.5px] sm:text-[14px] leading-tight truncate cursor-pointer group-hover:text-[#e8703b] transition-colors"
-                      title={item.name}
-                    >
-                      {item.name}
-                    </h3>
+                    {/* 2. Text Details */}
+                    <div className="flex flex-col flex-grow">
+                      {/* Collection Title */}
+                      <h3
+                        onClick={() => navigate(`/product/${pid}`)}
+                        className="font-semibold text-gray-900 text-[13.5px] sm:text-[14px] leading-tight truncate cursor-pointer group-hover:text-[#e8703b] transition-colors"
+                        title={item.name}
+                      >
+                        {item.name}
+                      </h3>
 
-                    {/* Tamil Name Subtitle */}
-                    <p className="text-[11px] text-gray-400 truncate mt-0.5">
-                      {item.tamilName}
-                    </p>
+                      {/* Tamil Name Subtitle */}
+                      <p className="text-[11px] text-amber-800/80 font-medium truncate mt-0.5">
+                        {tamilName}
+                      </p>
 
-                    {/* Price Row: Bold Price + Strikethrough MRP */}
-                    <div className="flex items-baseline gap-1.5 mt-1.5">
-                      <span className="font-bold text-gray-900 text-sm sm:text-[15px]">
-                        ₹{item.price}
-                      </span>
-                      {item.mrp > item.price && (
-                        <span className="text-[11px] text-gray-400 line-through font-normal">
-                          ₹{item.mrp}
+                      {/* Price Row: Bold Price + Strikethrough MRP */}
+                      <div className="flex items-baseline gap-1.5 mt-1.5">
+                        <span className="font-bold text-gray-900 text-sm sm:text-[15px]">
+                          ₹{price}
                         </span>
+                        {mrp > price && (
+                          <span className="text-[11px] text-gray-400 line-through font-normal">
+                            ₹{mrp}
+                          </span>
+                        )}
+                        {mrp > price && (
+                          <span className="text-[10px] font-bold text-emerald-600 ml-auto">
+                            {Math.round(((mrp - price) / mrp) * 100)}% off
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Star Rating Row */}
+                      <div className="flex items-center gap-1 mt-1.5">
+                        <div className="flex text-[#F59E0B] gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className="w-3 h-3 fill-[#F59E0B] text-[#F59E0B]"
+                            />
+                          ))}
+                        </div>
+                        <span className="text-[10.5px] text-gray-500 font-medium ml-0.5">
+                          (4.8)
+                        </span>
+                      </div>
+
+                      {/* Action Button: Add to Cart or Notify Me */}
+                      {isOutOfStock ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setNotifyProduct(item);
+                          }}
+                          className="w-full mt-3 py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                        >
+                          <Bell className="w-3.5 h-3.5 stroke-[1.9]" />
+                          <span>Notify Me</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart(item);
+                          }}
+                          className="w-full mt-3 py-2 px-3 rounded-lg bg-[#e8703b] hover:bg-[#d45f2a] text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                        >
+                          <ShoppingCart className="w-3.5 h-3.5 stroke-[1.9]" />
+                          <span>Add to Cart</span>
+                        </button>
                       )}
                     </div>
-
-                    {/* Star Rating Row */}
-                    <div className="flex items-center gap-1 mt-1.5">
-                      <div className="flex text-[#F59E0B] gap-0.5">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className="w-3 h-3 fill-[#F59E0B] text-[#F59E0B]"
-                          />
-                        ))}
-                      </div>
-                      <span className="text-[10.5px] text-gray-500 font-medium ml-0.5">
-                        ({item.reviews})
-                      </span>
-                    </div>
-
-                    {/* Full-width Orange Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(item.link);
-                      }}
-                      className="w-full mt-3 py-2 px-3 rounded-lg bg-[#e8703b] hover:bg-[#d45f2a] text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-                    >
-                      <ShoppingCart className="w-3.5 h-3.5 stroke-[1.9]" />
-                      <span>Explore Collection</span>
-                    </button>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
+
+      {/* Back In Stock Notify Modal */}
+      <NotifyMeModal
+        isOpen={!!notifyProduct}
+        onClose={() => setNotifyProduct(null)}
+        product={notifyProduct}
+      />
     </section>
   );
 };
