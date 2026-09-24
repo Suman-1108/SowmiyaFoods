@@ -7,7 +7,9 @@
     "build": "npm --prefix Frontend run build",
     "postinstall": "npm --prefix Frontend install",
     "dev": "npm --prefix Frontend run dev",
-    "server": "npm --prefix Backend run dev"
+    "server": "npm --prefix Backend run dev",
+    "seed": "npm --prefix Backend run seed",
+    "sync-seed": "npm --prefix Backend run sync-seed"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
