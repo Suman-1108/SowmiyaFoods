@@ -4,13 +4,18 @@ import banner1 from "../../assets/banner1.png";
 import banner2 from "../../assets/banner2.png";
 import banner3 from "../../assets/banner3.png";
 import banner4 from "../../assets/banner4.png";
+import banner5 from "../../assets/banner5.png";
+import banner6 from "../../assets/banner6.png";
+
+
 import banner1Mobile from "../../assets/banner1-mobile.png";
 import banner2Mobile from "../../assets/banner2-mobile.png";
 import banner3Mobile from "../../assets/banner3-mobile.png";
 import banner4Mobile from "../../assets/banner4-mobile.png";
+import banner5Mobile from "../../assets/banner5-mobile.png";
 
-const desktopBanners = [banner1, banner2, banner3, banner4];
-const mobileBanners = [banner1Mobile, banner2Mobile, banner3Mobile, banner4Mobile];
+const desktopBanners = [banner6, banner2, banner3, banner1];
+const mobileBanners = [banner1Mobile, banner2Mobile, banner3Mobile, banner5Mobile];
 
 const Carousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -69,25 +74,22 @@ const Carousel = () => {
 
   return (
     <div
-      className={`relative w-full overflow-hidden bg-gray-100 ${
-        isMobile ? "aspect-[9/16] max-h-auto" : "h-[250px] sm:h-[350px] md:h-[400px] lg:h-[450px] xl:h-[500px]"
-      }`}
+      className={`relative w-full overflow-hidden bg-gray-100 ${isMobile ? "aspect-[9/16] max-h-auto" : "h-[250px] sm:h-[350px] md:h-[400px] lg:h-[450px] xl:h-[500px]"
+        }`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
       {banners.map((banner, index) => (
         <div
           key={`${isMobile ? "mobile" : "desktop"}-${index}`}
-          className={`absolute top-0 left-0 w-full h-full transition-opacity duration-700 ease-in-out ${
-            index === currentIndex ? "opacity-100" : "opacity-0"
-          }`}
+          className={`absolute top-0 left-0 w-full h-full transition-opacity duration-700 ease-in-out ${index === currentIndex ? "opacity-100" : "opacity-0"
+            }`}
         >
           <img
             src={banner}
             alt={`Banner ${index + 1}`}
-            className={`w-full h-full ${
-              isMobile ? "object-fill" : "object-cover object-center"
-            }`}
+            className={`w-full h-full ${isMobile ? "object-fill" : "object-cover object-center"
+              }`}
           />
         </div>
       ))}
@@ -114,11 +116,10 @@ const Carousel = () => {
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`transition-all duration-300 ${
-              currentIndex === index
-                ? "w-6 h-2 sm:w-8 sm:h-2.5 bg-white rounded-full"
-                : "w-2 h-2 sm:w-2.5 sm:h-2.5 bg-white/60 rounded-full hover:bg-white/80"
-            }`}
+            className={`transition-all duration-300 ${currentIndex === index
+              ? "w-6 h-2 sm:w-8 sm:h-2.5 bg-white rounded-full"
+              : "w-2 h-2 sm:w-2.5 sm:h-2.5 bg-white/60 rounded-full hover:bg-white/80"
+              }`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}
