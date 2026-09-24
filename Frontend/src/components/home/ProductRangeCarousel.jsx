@@ -349,7 +349,7 @@ const CategoryCarouselSection = ({
         >
           {categoryProducts.map((product, pIdx) => {
             const price = Number(product.price) || 0;
-            const mrp = Math.round(price * 1.32) || price + 40;
+            const mrp = product.mrp !== undefined && product.mrp !== null ? Number(product.mrp) : (Math.round(price * 1.32) || price + 40);
             const discount = Math.round(((mrp - price) / mrp) * 100);
             const rating = (4.2 + ((pIdx * 3) % 7) / 10).toFixed(1);
             const isOutOfStock =

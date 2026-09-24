@@ -233,6 +233,7 @@ export const createProduct = async (req, res) => {
       name,
       description,
       price,
+      mrp,
       category,
       image,
       stock,
@@ -255,11 +256,17 @@ export const createProduct = async (req, res) => {
     const parsedStock = stock !== undefined && stock !== "" ? Math.max(0, Number(stock)) : 20;
     const parsedThreshold = lowStockThreshold !== undefined && lowStockThreshold !== "" ? Math.max(1, Number(lowStockThreshold)) : 10;
     const parsedInStock = inStock !== undefined ? Boolean(inStock) : parsedStock > 0;
+    const parsedPrice = Number(price);
+    const parsedMrp =
+      mrp !== undefined && mrp !== "" && !isNaN(Number(mrp))
+        ? Number(mrp)
+        : parsedPrice;
 
     const product = new Product({
       name,
       description,
-      price: Number(price),
+      price: parsedPrice,
+      mrp: parsedMrp,
       category,
       image: imageUrl,
       slug,
@@ -283,7 +290,7 @@ export const createProduct = async (req, res) => {
 // @desc Update a product (Admin only)
 export const updateProduct = async (req, res) => {
   try {
-    const { name, description, price, category, image, stock, lowStockThreshold, inStock } = req.body;
+    const { name, description, price, mrp, category, image, stock, lowStockThreshold, inStock } = req.body;
 
     const product = await Product.findById(req.params.id);
     if (!product) {
@@ -297,6 +304,9 @@ export const updateProduct = async (req, res) => {
     
     product.description = description !== undefined ? description : product.description;
     product.price = price !== undefined ? Number(price) : product.price;
+    if (mrp !== undefined) {
+      product.mrp = mrp !== "" && !isNaN(Number(mrp)) ? Number(mrp) : product.price;
+    }
     product.category = category !== undefined ? category : product.category;
     
     if (stock !== undefined && stock !== "") {
@@ -910,6 +920,10 @@ export const bulkImportProducts = async (req, res) => {
       try {
         const name = (item.name || "").trim();
         const price = Number(item.price);
+        const mrp =
+          item.mrp !== undefined && item.mrp !== "" && !isNaN(Number(item.mrp))
+            ? Number(item.mrp)
+            : price;
         const category = (item.category || "General").trim();
         const description = (item.description || "").trim();
         const stock =
@@ -958,6 +972,7 @@ export const bulkImportProducts = async (req, res) => {
         const newProduct = new Product({
           name,
           price,
+          mrp,
           category,
           description,
           image: imageUrl,

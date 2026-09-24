@@ -130,6 +130,7 @@ const BulkImportModal = ({
         {
           Name: "Roasted Vermicelli 500g",
           Category: "VERMICELLI",
+          MRP: 55,
           Price: 45,
           Stock: 50,
           LowStockThreshold: 10,
@@ -140,6 +141,7 @@ const BulkImportModal = ({
         {
           Name: "Finger Millet (Ragi) Noodles 200g",
           Category: "NOODLES",
+          MRP: 75,
           Price: 65,
           Stock: 40,
           LowStockThreshold: 8,
@@ -150,6 +152,7 @@ const BulkImportModal = ({
         {
           Name: "Pure Stone-Ground Ragi Flour 1kg",
           Category: "FLOUR",
+          MRP: 95,
           Price: 80,
           Stock: 30,
           LowStockThreshold: 5,
@@ -160,6 +163,7 @@ const BulkImportModal = ({
         {
           Name: "Premium Bombay Sooji 1kg",
           Category: "RAVA",
+          MRP: 85,
           Price: 70,
           Stock: 25,
           LowStockThreshold: 5,
@@ -181,6 +185,7 @@ const BulkImportModal = ({
       wsProducts["!cols"] = [
         { wch: 35 }, // Name
         { wch: 20 }, // Category
+        { wch: 12 }, // MRP
         { wch: 12 }, // Price
         { wch: 12 }, // Stock
         { wch: 18 }, // LowStockThreshold
@@ -250,7 +255,9 @@ const BulkImportModal = ({
             "FLOUR"
           ).toString().trim();
 
-          const price = parseFloat(normalized["price"] || normalized["productprice"] || 0);
+          const price = parseFloat(normalized["price"] || normalized["productprice"] || normalized["sellingprice"] || 0);
+          const mrpRaw = normalized["mrp"] || normalized["maximumretailprice"] || normalized["originalprice"];
+          const parsedMrp = mrpRaw !== undefined && mrpRaw !== "" ? parseFloat(mrpRaw) : price;
 
           const stockRaw = normalized["stock"] || normalized["quantity"] || normalized["inventory"] || 20;
           const stock = isNaN(parseInt(stockRaw, 10)) ? 20 : parseInt(stockRaw, 10);
@@ -286,6 +293,7 @@ const BulkImportModal = ({
             name,
             category,
             price: isNaN(price) ? 0 : price,
+            mrp: isNaN(parsedMrp) ? (isNaN(price) ? 0 : price) : parsedMrp,
             stock,
             lowStockThreshold,
             inStock,
@@ -427,6 +435,7 @@ const BulkImportModal = ({
         name: r.name.trim(),
         category: r.category || "FLOUR",
         price: Number(r.price),
+        mrp: r.mrp !== undefined && r.mrp !== "" && !isNaN(Number(r.mrp)) ? Number(r.mrp) : Number(r.price),
         stock: Number(r.stock) || 20,
         lowStockThreshold: Number(r.lowStockThreshold) || 10,
         inStock: r.inStock !== false,
@@ -810,7 +819,8 @@ const BulkImportModal = ({
                           <th className="py-2.5 px-3">Image</th>
                           <th className="py-2.5 px-3">Product Name</th>
                           <th className="py-2.5 px-3">Category</th>
-                          <th className="py-2.5 px-3">Price (₹)</th>
+                          <th className="py-2.5 px-3">MRP (₹)</th>
+                          <th className="py-2.5 px-3">Selling Price (₹)</th>
                           <th className="py-2.5 px-3">Stock</th>
                           <th className="py-2.5 px-3">In Stock?</th>
                           <th className="py-2.5 px-3 text-center">Action</th>
@@ -890,6 +900,19 @@ const BulkImportModal = ({
                                     </option>
                                   ))}
                                 </select>
+                              </td>
+
+                              {/* MRP */}
+                              <td className="py-2.5 px-3">
+                                <input
+                                  type="number"
+                                  value={row.mrp !== undefined ? row.mrp : ""}
+                                  onChange={(e) =>
+                                    handleUpdateRow(row.id, "mrp", parseFloat(e.target.value) || 0)
+                                  }
+                                  placeholder="MRP"
+                                  className="w-20 px-2 py-1 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-[#e8703b]"
+                                />
                               </td>
 
                               {/* Price */}

@@ -440,7 +440,7 @@ const ProductDetails = () => {
 
   // Pricing calculations
   const price = Number(product.price) || 0;
-  const mrp = Math.round(price * 1.33) || price + 35;
+  const mrp = product.mrp !== undefined && product.mrp !== null ? Number(product.mrp) : (Math.round(price * 1.33) || price + 35);
   const saveAmount = mrp - price;
   const discountPercent = Math.round((saveAmount / mrp) * 100);
   const tamilTagline = getTamilSlogan(product.name);
@@ -1221,7 +1221,7 @@ const ProductDetails = () => {
             >
               {relatedProducts.map((relProduct, rIdx) => {
                 const relPrice = Number(relProduct.price) || 0;
-                const relMrp = Math.round(relPrice * 1.3) || relPrice + 35;
+                const relMrp = relProduct.mrp !== undefined && relProduct.mrp !== null ? Number(relProduct.mrp) : (Math.round(relPrice * 1.3) || relPrice + 35);
                 const relReviewCount = 70 + ((rIdx * 23) % 80);
 
                 // Badge assignment - only "New" (Best Seller & Sale removed)

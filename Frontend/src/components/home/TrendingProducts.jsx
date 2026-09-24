@@ -259,7 +259,7 @@ const TrendingProducts = () => {
           >
             {processedProducts.map((product, pIdx) => {
               const price = Number(product.price) || 0;
-              const mrp = Math.round(price * 1.3) || price + 35;
+              const mrp = product.mrp !== undefined && product.mrp !== null ? Number(product.mrp) : (Math.round(price * 1.3) || price + 35);
               const isWishlisted = !!wishlist[product._id];
               const reviewCount = 70 + ((pIdx * 29) % 80);
 

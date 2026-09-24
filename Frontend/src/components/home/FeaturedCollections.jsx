@@ -292,7 +292,7 @@ const FeaturedCollections = () => {
               const pid = item._id || String(idx);
               const isWishlisted = !!wishlist[pid];
               const price = Number(item.price) || 0;
-              const mrp = Math.round(price * 1.32) || price + 35;
+              const mrp = item.mrp !== undefined && item.mrp !== null ? Number(item.mrp) : (Math.round(price * 1.32) || price + 35);
               const isOutOfStock =
                 item.inStock === false ||
                 (item.stock !== undefined && Number(item.stock) <= 0);

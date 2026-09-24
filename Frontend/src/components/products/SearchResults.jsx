@@ -183,7 +183,20 @@ const SearchResults = () => {
                             </>
                           ) : (
                             <>
-                              <p className="text-lg font-bold text-gray-900">₹{product.price}</p>
+                              <div className="flex items-baseline gap-1.5">
+                                <p className="text-lg font-bold text-gray-900">₹{product.price}</p>
+                                {(() => {
+                                  const itemMrp =
+                                    product.mrp !== undefined && product.mrp !== null
+                                      ? Number(product.mrp)
+                                      : Math.round(Number(product.price) * 1.3) || Number(product.price) + 30;
+                                  return itemMrp > Number(product.price) ? (
+                                    <span className="text-xs text-gray-400 line-through">
+                                      ₹{itemMrp}
+                                    </span>
+                                  ) : null;
+                                })()}
+                              </div>
                               <button
                                 onClick={async (e) => {
                                   e.stopPropagation();

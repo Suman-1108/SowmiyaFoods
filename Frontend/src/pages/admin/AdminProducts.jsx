@@ -493,7 +493,7 @@ const AdminProducts = () => {
               <tr>
                 <th className="py-3.5 px-4">Product</th>
                 <th className="py-3.5 px-4">Category</th>
-                <th className="py-3.5 px-4">Price</th>
+                <th className="py-3.5 px-4">Price / MRP</th>
                 <th className="py-3.5 px-4">Stock & Status</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
@@ -519,6 +519,9 @@ const AdminProducts = () => {
               ) : (
                 filteredProducts.map((product) => {
                   const isInStock = product.inStock !== false;
+                  const price = Number(product.price) || 0;
+                  const mrp = product.mrp !== undefined && product.mrp !== null ? Number(product.mrp) : null;
+                  const hasDiscount = mrp && mrp > price;
                   return (
                     <tr
                       key={product._id}
@@ -558,11 +561,29 @@ const AdminProducts = () => {
                         </span>
                       </td>
 
-                      {/* Price */}
+                      {/* Price & MRP */}
                       <td className="py-3.5 px-4">
-                        <span className="font-bold text-slate-900 text-sm">
-                          ₹{Number(product.price).toFixed(2)}
-                        </span>
+                        <div className="flex flex-col">
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="font-bold text-slate-900 text-sm">
+                              ₹{price.toFixed(2)}
+                            </span>
+                            {hasDiscount && (
+                              <span className="text-[11px] text-slate-400 line-through">
+                                ₹{mrp.toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+                          {hasDiscount ? (
+                            <span className="inline-block mt-0.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 w-fit">
+                              {Math.round(((mrp - price) / mrp) * 100)}% off
+                            </span>
+                          ) : mrp && mrp !== price ? (
+                            <span className="text-[10px] text-slate-400 mt-0.5">
+                              MRP: ₹{mrp.toFixed(2)}
+                            </span>
+                          ) : null}
+                        </div>
                       </td>
 
                       {/* Stock Status & Units */}

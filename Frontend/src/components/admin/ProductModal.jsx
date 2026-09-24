@@ -81,6 +81,7 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct, availableCatego
   const [formData, setFormData] = useState({
     name: "",
     price: "",
+    mrp: "",
     category: "",
     description: "",
     image: "",
@@ -135,7 +136,13 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct, availableCatego
     if (editingProduct) {
       setFormData({
         name: editingProduct.name || "",
-        price: editingProduct.price !== undefined ? String(editingProduct.price) : "",
+        price: editingProduct.price !== undefined && editingProduct.price !== null ? String(editingProduct.price) : "",
+        mrp:
+          editingProduct.mrp !== undefined && editingProduct.mrp !== null
+            ? String(editingProduct.mrp)
+            : editingProduct.price !== undefined && editingProduct.price !== null
+            ? String(editingProduct.price)
+            : "",
         category: editingProduct.category || "",
         description: editingProduct.description || "",
         image: editingProduct.image || "",
@@ -160,6 +167,7 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct, availableCatego
       setFormData({
         name: "",
         price: "",
+        mrp: "",
         category: categories[0] || "FLOUR",
         description: "",
         image: "",
@@ -267,7 +275,13 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct, availableCatego
 
     const priceNum = parseFloat(formData.price);
     if (isNaN(priceNum) || priceNum <= 0) {
-      toast.error("Please enter a valid price greater than 0");
+      toast.error("Please enter a valid selling price greater than 0");
+      return;
+    }
+
+    const mrpNum = formData.mrp !== "" ? parseFloat(formData.mrp) : priceNum;
+    if (isNaN(mrpNum) || mrpNum <= 0) {
+      toast.error("Please enter a valid MRP greater than 0");
       return;
     }
 
@@ -285,6 +299,7 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct, availableCatego
       const payload = {
         name: formData.name.trim(),
         price: priceNum,
+        mrp: mrpNum,
         category: selectedCategory,
         description: formData.description.trim(),
         image: formData.image || imagePreview || "",
@@ -350,101 +365,179 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct, availableCatego
               />
             </div>
 
-            {/* Category & Price Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Category */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Category <span className="text-rose-500">*</span>
-                  </label>
+            {/* Category */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Category <span className="text-rose-500">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsManagingCategories((prev) => !prev)}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-[#e8703b] hover:text-[#d65f29] hover:underline transition cursor-pointer"
+                >
+                  <FolderTree className="w-3 h-3" />
+                  <span>{isManagingCategories ? "Close Manager" : "Manage / Delete"}</span>
+                </button>
+              </div>
+
+              {!isCustomCategory ? (
+                <div className="relative">
+                  <select
+                    value={formData.category}
+                    onChange={(e) => {
+                      if (e.target.value === "__NEW__") {
+                        setIsCustomCategory(true);
+                        setCustomCategory("");
+                      } else {
+                        setFormData({ ...formData, category: e.target.value });
+                      }
+                    }}
+                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e8703b] focus:border-transparent transition"
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                    <option value="__NEW__">+ Add Custom Category...</option>
+                  </select>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter new category name"
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddNewCategory(customCategory);
+                      }
+                    }}
+                    className="flex-1 px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e8703b] focus:border-transparent transition"
+                  />
                   <button
                     type="button"
-                    onClick={() => setIsManagingCategories((prev) => !prev)}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#e8703b] hover:text-[#d65f29] hover:underline transition cursor-pointer"
+                    onClick={() => handleAddNewCategory(customCategory)}
+                    disabled={isCreatingCategory || !customCategory.trim()}
+                    className="px-3 py-1.5 text-xs font-bold text-white bg-[#e8703b] hover:bg-[#d65f29] rounded-xl shadow-xs transition cursor-pointer disabled:opacity-60"
                   >
-                    <FolderTree className="w-3 h-3" />
-                    <span>{isManagingCategories ? "Close Manager" : "Manage / Delete"}</span>
+                    {isCreatingCategory ? "Saving..." : "Add & Select"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomCategory(false)}
+                    className="px-2.5 py-1 text-xs text-slate-500 hover:text-slate-800 bg-slate-100 rounded-lg cursor-pointer"
+                  >
+                    Cancel
                   </button>
                 </div>
+              )}
+            </div>
 
-                {!isCustomCategory ? (
-                  <div className="relative">
-                    <select
-                      value={formData.category}
-                      onChange={(e) => {
-                        if (e.target.value === "__NEW__") {
-                          setIsCustomCategory(true);
-                          setCustomCategory("");
-                        } else {
-                          setFormData({ ...formData, category: e.target.value });
-                        }
-                      }}
-                      className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e8703b] focus:border-transparent transition"
-                    >
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
-                      <option value="__NEW__">+ Add Custom Category...</option>
-                    </select>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Enter new category name"
-                      value={customCategory}
-                      onChange={(e) => setCustomCategory(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleAddNewCategory(customCategory);
-                        }
-                      }}
-                      className="flex-1 px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e8703b] focus:border-transparent transition"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleAddNewCategory(customCategory)}
-                      disabled={isCreatingCategory || !customCategory.trim()}
-                      className="px-3 py-1.5 text-xs font-bold text-white bg-[#e8703b] hover:bg-[#d65f29] rounded-xl shadow-xs transition cursor-pointer disabled:opacity-60"
-                    >
-                      {isCreatingCategory ? "Saving..." : "Add & Select"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsCustomCategory(false)}
-                      className="px-2.5 py-1 text-xs text-slate-500 hover:text-slate-800 bg-slate-100 rounded-lg cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
+            {/* Pricing Section: MRP and Selling Price (Entered Manually) */}
+            <div className="p-4 bg-orange-50/50 rounded-2xl border border-orange-200/80 space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-[#e8703b]" />
+                    <span>Pricing Configuration</span>
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Enter both MRP and Selling Price manually
+                  </p>
+                </div>
+
+                {/* Dynamic Discount Pill */}
+                {(() => {
+                  const m = parseFloat(formData.mrp);
+                  const p = parseFloat(formData.price);
+                  if (!isNaN(m) && !isNaN(p) && m > p && p > 0) {
+                    const discountPercent = Math.round(((m - p) / m) * 100);
+                    const savings = (m - p).toFixed(2);
+                    return (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        <span>{discountPercent}% OFF</span>
+                        <span className="text-[10.5px] text-emerald-700 font-semibold">
+                          (Save ₹{savings})
+                        </span>
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
 
-              {/* Price */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Selling Price (₹) <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-2.5 text-slate-400 font-bold text-sm">
-                    ₹
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* MRP (Manual Input) */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    MRP (Printed / Original ₹) <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-2.5 text-slate-400 font-bold text-sm">
+                      ₹
+                    </span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      value={formData.mrp}
+                      onChange={(e) => setFormData({ ...formData, mrp: e.target.value })}
+                      placeholder="e.g. 120.00"
+                      className="w-full pl-8 pr-3.5 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e8703b] focus:border-transparent transition font-semibold text-slate-900"
+                    />
+                  </div>
+                  <span className="text-[10.5px] text-slate-400 mt-1 block">
+                    Maximum Retail Price shown with strikethrough
                   </span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    placeholder="99.00"
-                    className="w-full pl-8 pr-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e8703b] focus:border-transparent transition font-semibold"
-                  />
+                </div>
+
+                {/* Selling Price (Manual Input) */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Selling Price (Sell / Offer ₹) <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-2.5 text-slate-400 font-bold text-sm">
+                      ₹
+                    </span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      placeholder="e.g. 99.00"
+                      className="w-full pl-8 pr-3.5 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e8703b] focus:border-transparent transition font-semibold text-slate-900"
+                    />
+                  </div>
+                  <span className="text-[10.5px] text-slate-400 mt-1 block">
+                    Actual selling price customer pays
+                  </span>
                 </div>
               </div>
+
+              {/* Informative notice if price > mrp */}
+              {(() => {
+                const m = parseFloat(formData.mrp);
+                const p = parseFloat(formData.price);
+                if (!isNaN(m) && !isNaN(p) && m > 0 && p > m) {
+                  return (
+                    <div className="flex items-center gap-1.5 p-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span>
+                        Notice: Selling price (₹{p}) is higher than MRP (₹{m}). Please verify.
+                      </span>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
 
             {/* Category Manager Dropdown Card */}
