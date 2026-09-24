@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import { syncSeedFilesFromDb } from "./utils/seedSync.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,15 +21,16 @@ if (!MONGO_URI) {
   process.exit(1);
 }
 
-// 2. Define products array (70 default products)
+// 2. Define products array (72 default products)
 export const products = [
-  // 1. Millet (6 products)
+  // 1. Millet (7 products)
   {"name":"Kambu (Bajra) Flour 500g","category":"Millet","price":40,"mrp":55,"description":"Nutritious pearl millet flour.\nRich in iron and fiber.","image":"https://res.cloudinary.com/dbuyr00w6/image/upload/v1760268062/bajra-flour_ngkfkc.png","slug":"kambu-bajra-flour-500g","stock":50,"lowStockThreshold":10,"inStock":true},
   {"name":"Ragi Flour 500g","category":"Millet","price":35,"mrp":50,"description":"Nutritious finger millet flour.\nGreat for healthy recipes.","image":"https://res.cloudinary.com/dbuyr00w6/image/upload/v1760272312/ragi-flour_mi8rqx.png","slug":"ragi-flour-500g","stock":50,"lowStockThreshold":10,"inStock":true},
   {"name":"Millet Puttu Podi 250g","category":"Millet","price":55,"mrp":75,"description":"Specialty millet puttu mix.\nAuthentic taste.","image":"https://res.cloudinary.com/qnbhfeck/image/upload/v1790241094/sowmiyafoods/kwmpwirw7fcagtjyxfrd.jpg","slug":"millet-puttu-podi-250g","stock":50,"lowStockThreshold":10,"inStock":true},
   {"name":"Millet Idly Dosa Mix 500g","category":"Millet","price":65,"mrp":85,"description":"Healthy multi-millet dosa mix.\nEasy to prepare.","image":"https://res.cloudinary.com/qnbhfeck/image/upload/v1790241146/sowmiyafoods/egrg9uu3moxyi72jg0eb.jpg","slug":"millet-idly-dosa-mix-500g","stock":50,"lowStockThreshold":10,"inStock":true},
   {"name":"Broken Samba Wheat 500g","category":"Millet","price":65,"mrp":85,"description":"Premium broken samba wheat.\nHealthy and nutritious.","image":"https://res.cloudinary.com/qnbhfeck/image/upload/v1790246615/sowmiyafoods/y4mhrlxpywbltvykgmka.jpg","slug":"broken-samba-wheat-500g","stock":50,"lowStockThreshold":10,"inStock":true},
   {"name":"Sivappu Kavuni Puttu Flour – 250g","category":"Millet","price":92,"mrp":100,"description":"Enjoy the traditional taste and rich character of Sivappu Kavuni Puttu with Ramar Sivappu Kavuni Puttu Flour. Made from traditional red kavuni rice, this flour is specially prepared for making soft, flavorful and authentic South Indian puttu at home.","image":"https://res.cloudinary.com/qnbhfeck/image/upload/v1790246403/sowmiyafoods/bw9bbkwt83fwafg29yaz.jpg","slug":"sivappu-kavuni-puttu-flour-250g","stock":250,"lowStockThreshold":10,"inStock":true},
+  {"name":"Millet Puttu Podi – 250g","category":"Millet","price":56,"mrp":65,"description":"Ramar Millet Puttu Podi is a traditional South Indian puttu mix made for preparing soft, wholesome and flavourful puttu at home. The millet-based flour offers a convenient way to enjoy a traditional steamed breakfast with an authentic taste and texture.","image":"https://res.cloudinary.com/qnbhfeck/image/upload/v1790257908/sowmiyafoods/zzvm9thcn1v44xn7ms11.jpg","slug":"millet-puttu-podi-250g-1","stock":25,"lowStockThreshold":10,"inStock":true},
 
   // 2. Instant Products (4 products)
   {"name":"Instant Parotta 200g","category":"Instant Products","price":30,"mrp":45,"description":"Ready-to-cook parotta.\nSoft and fluffy every time.","image":"https://res.cloudinary.com/qnbhfeck/image/upload/v1790241290/sowmiyafoods/ymuowqhmn4wdjhb54rd8.jpg","slug":"instant-parotta-200g","stock":50,"lowStockThreshold":10,"inStock":true},
@@ -51,7 +53,7 @@ export const products = [
   {"name":"Semia – 500g","category":"Semiya","price":58,"mrp":80,"description":"Roasted long vermicelli.\nIdeal for savory upma and sweet payasam.","image":"https://res.cloudinary.com/dbuyr00w6/image/upload/v1760272316/vermicelli_oekzvx.png","slug":"semia-500g","stock":50,"lowStockThreshold":10,"inStock":true},
   {"name":"Ragi Semiya – 200g","category":"Semiya","price":32,"mrp":45,"description":"Rich in fiber and nutrients.\nIdeal for wholesome healthy eating.","image":"https://res.cloudinary.com/qnbhfeck/image/upload/v1790227462/sowmiyafoods/axoe7hpewc3t3luqnvfc.jpg","slug":"ragi-semiya-200g","stock":50,"lowStockThreshold":10,"inStock":true},
 
-  // 5. Flour Items (17 products)
+  // 5. Flour Items (18 products)
   {"name":"Chakki Atta 500g","category":"Flour Items","price":32,"mrp":45,"description":"Freshly ground 100% whole wheat atta.\nSoft and healthy rotis.","image":"https://res.cloudinary.com/qnbhfeck/image/upload/v1790227488/sowmiyafoods/tzgnd6ncrstze8gkgkuj.jpg","slug":"chakki-atta-500g","stock":50,"lowStockThreshold":10,"inStock":true},
   {"name":"Chakki Atta 5kg","category":"Flour Items","price":270,"mrp":350,"description":"Freshly ground whole wheat atta bulk pack.","image":"https://res.cloudinary.com/dbuyr00w6/image/upload/v1760266660/WhatsApp_Image_2025-10-11_at_18.54.22_f8b79ba1_jzvxuq.jpg","slug":"chakki-atta-5kg","stock":50,"lowStockThreshold":10,"inStock":true},
   {"name":"Maida 500g","category":"Flour Items","price":35,"mrp":50,"description":"Fine maida flour.\nIdeal for baking and cooking.","image":"https://res.cloudinary.com/qnbhfeck/image/upload/v1790227514/sowmiyafoods/oem8p01r7ogjvh0j7gkr.jpg","slug":"maida-500g","stock":50,"lowStockThreshold":10,"inStock":true},
@@ -69,6 +71,7 @@ export const products = [
   {"name":"Corn Flour – ₹10 Pack","category":"Flour Items","price":10,"mrp":10,"description":"Ramar Corn Flour is a fine-quality maize starch that helps add smoothness and crispiness to everyday dishes. This convenient small pack is ideal for home cooking and preparing soups, sauces, gravies and crispy snacks.","image":"https://res.cloudinary.com/qnbhfeck/image/upload/v1790247264/sowmiyafoods/d74jhexrxyr3eiiv4tv3.jpg","slug":"corn-flour-10-pack","stock":250,"lowStockThreshold":10,"inStock":true},
   {"name":"Corn Flour – 500g","category":"Flour Items","price":44,"mrp":50,"description":"Ramar Corn Flour is a versatile kitchen essential made from maize starch. It helps create smooth gravies, thick sauces and crispy fried dishes, making it suitable for a wide range of everyday recipes.","image":"https://res.cloudinary.com/qnbhfeck/image/upload/v1790247329/sowmiyafoods/itzkgsx91mnisnxnj5zc.jpg","slug":"corn-flour-500g","stock":25,"lowStockThreshold":10,"inStock":true},
   {"name":"Corn Flour – 1kg","category":"Flour Items","price":76,"mrp":90,"description":"Ramar Corn Flour is a versatile kitchen essential made from maize starch. It helps create smooth gravies, thick sauces and crispy fried dishes, making it suitable for a wide range of everyday recipes.","image":"https://res.cloudinary.com/qnbhfeck/image/upload/v1790247602/sowmiyafoods/m1j9tp835yfbw5oomf1m.jpg","slug":"corn-flour-1kg","stock":250,"lowStockThreshold":10,"inStock":true},
+  {"name":"Ramar Kozhukattai Flour – 500g","category":"Flour Items","price":92,"mrp":100,"description":"Ramar Kozhukattai Flour is a convenient flour specially prepared for making traditional South Indian kozhukattai. It can be used to prepare soft, smooth and delicious steamed kozhukattai with your choice of sweet or savoury filling. A convenient option for preparing authentic traditional dishes at home.","image":"https://res.cloudinary.com/qnbhfeck/image/upload/v1790257585/sowmiyafoods/a05izrqkdhpwwbimcpdw.jpg","slug":"ramar-kozhukattai-flour-500g","stock":25,"lowStockThreshold":10,"inStock":true},
 
   // 6. Rava Sooji (3 products)
   {"name":"Roasted Sooji 250g","category":"Rava Sooji","price":20,"mrp":30,"description":"Premium roasted sooji.\nIdeal for idli, upma and kesari.","image":"https://res.cloudinary.com/dbuyr00w6/image/upload/v1760276417/rava-org_yvgm7r.png","slug":"roasted-sooji-250g","stock":50,"lowStockThreshold":10,"inStock":true},
@@ -141,7 +144,17 @@ export const seedProducts = async () => {
   }
 };
 
-// Auto-run if executed directly
+// 4. CLI Execution:
+// 'node SeedProducts.js' => seeds products to DB
+// 'node SeedProducts.js --sync' => pulls products from DB and updates SeedProducts.js & data/products.json
 if (process.argv[1] && process.argv[1].endsWith("SeedProducts.js")) {
-  seedProducts();
+  if (process.argv.includes("--sync") || process.argv.includes("-s")) {
+    mongoose.connect(MONGO_URI).then(async () => {
+      await syncSeedFilesFromDb();
+      await mongoose.connection.close();
+      console.log("Sync complete!");
+    });
+  } else {
+    seedProducts();
+  }
 }

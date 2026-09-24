@@ -4,6 +4,7 @@ import Category from "../models/Category.js";
 import StockNotification from "../models/StockNotification.js";
 import Review from "../models/Review.js";
 import cloudinary from "../config/cloudinaryConfig.js";
+import { syncSeedFilesFromDb } from "../utils/seedSync.js";
 
 // Helper to convert product name to slug
 const slugify = (text) => {
@@ -277,6 +278,10 @@ export const createProduct = async (req, res) => {
 
     const savedProduct = await product.save();
 
+    setImmediate(() => {
+      syncSeedFilesFromDb().catch((err) => console.warn("[SEED-SYNC] Auto-sync failed:", err.message));
+    });
+
     return res.status(201).json(savedProduct);
   } catch (error) {
     console.error(error);
@@ -329,6 +334,9 @@ export const updateProduct = async (req, res) => {
     }
 
     const updatedProduct = await product.save();
+    setImmediate(() => {
+      syncSeedFilesFromDb().catch((err) => console.warn("[SEED-SYNC] Auto-sync failed:", err.message));
+    });
     res.status(200).json(updatedProduct);
   } catch (error) {
     console.error("Error updating product:", error);
@@ -894,6 +902,9 @@ export const deleteProduct = async (req, res) => {
     }
 
     await Product.deleteOne({ _id: req.params.id });
+    setImmediate(() => {
+      syncSeedFilesFromDb().catch((err) => console.warn("[SEED-SYNC] Auto-sync failed:", err.message));
+    });
     res.status(200).json({ message: "Product deleted successfully" });
   } catch (error) {
     console.error("Error deleting product:", error);
@@ -988,6 +999,12 @@ export const bulkImportProducts = async (req, res) => {
         console.error(`Error importing row #${rowNum}:`, err);
         errors.push({ row: rowNum, item: item.name || `Row #${rowNum}`, error: err.message });
       }
+    }
+
+    if (imported.length > 0) {
+      setImmediate(() => {
+        syncSeedFilesFromDb().catch((err) => console.warn("[SEED-SYNC] Auto-sync failed:", err.message));
+      });
     }
 
     return res.status(201).json({
