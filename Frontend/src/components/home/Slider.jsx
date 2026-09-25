@@ -5,6 +5,7 @@ import { ArrowRight, Truck, ShieldCheck, Headphones, CreditCard, Sparkles } from
 // Product images
 import wheatFlour1 from "../../assets/Atta_1.png";
 import ramarNoodles2 from "../../assets/noodles_1.png";
+import ramarNoodles3 from "../../assets/noodles_2.png";
 import ramarPuliyotharai from "../../assets/CutMango_1.png";
 import milletPodi from "../../assets/milletpodi_1.png";
 import murukkuMaavu from "../../assets/murukku_maavu.png";
@@ -73,7 +74,7 @@ const CATEGORY_CARDS = [
     title: "Special Ramar Noodles",
     tagline: "Quick comfort meal made with superior wheat",
     btnText: "Explore Noodles",
-    image: ramarNoodles2,
+    image: ramarNoodles3,
     gradient: "from-[#FFFDF7] via-[#FAF3E0] to-[#F5E6CC]",
     borderColor: "border-amber-200/90",
     glowColor: "bg-orange-400/15",
@@ -203,11 +204,10 @@ const Slider = () => {
 
                 {/* Floating Product Pack with High-Depth Lighting */}
                 <div
-                  className={`absolute pointer-events-none z-10 flex items-end justify-end transition-all duration-700 ease-out group-hover:scale-110 group-hover:-rotate-3 ${
-                    isColSpan2
+                  className={`absolute pointer-events-none z-10 flex items-end justify-end transition-all duration-700 ease-out group-hover:scale-110 group-hover:-rotate-3 ${isColSpan2
                       ? "right-2 sm:right-6 -bottom-3 sm:-bottom-4 w-[48%] sm:w-[46%] lg:w-[44%] h-[85%] sm:h-[90%]"
                       : "-right-3 sm:-right-4 -bottom-3 sm:-bottom-4 w-[62%] sm:w-[66%] lg:w-[70%] max-w-[270px] h-[82%] sm:h-[88%]"
-                  }`}
+                    }`}
                 >
                   <img
                     src={card.image}
@@ -227,27 +227,24 @@ const Slider = () => {
 
                     {/* Subtitle */}
                     <span
-                      className={`text-xs font-bold uppercase tracking-wider block mb-1 ${
-                        isTextLight ? "text-amber-200/90" : "text-[#C2410C]"
-                      }`}
+                      className={`text-xs font-bold uppercase tracking-wider block mb-1 ${isTextLight ? "text-amber-200/90" : "text-[#C2410C]"
+                        }`}
                     >
                       {card.subtitle}
                     </span>
 
                     {/* Main Title */}
                     <h3
-                      className={`text-2xl sm:text-3xl font-extrabold leading-tight tracking-tight drop-shadow-xs ${
-                        isTextLight ? "text-white" : "text-gray-950"
-                      }`}
+                      className={`text-2xl sm:text-3xl font-extrabold leading-tight tracking-tight drop-shadow-xs ${isTextLight ? "text-white" : "text-gray-950"
+                        }`}
                     >
                       {card.title}
                     </h3>
 
                     {/* Tagline */}
                     <p
-                      className={`mt-1.5 text-xs line-clamp-2 leading-relaxed ${
-                        isTextLight ? "text-white/75" : "text-stone-600"
-                      }`}
+                      className={`mt-1.5 text-xs line-clamp-2 leading-relaxed ${isTextLight ? "text-white/75" : "text-stone-600"
+                        }`}
                     >
                       {card.tagline}
                     </p>
