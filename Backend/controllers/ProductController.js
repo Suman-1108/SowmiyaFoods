@@ -67,7 +67,11 @@ const uploadToCloudinary = async (imageString, folder = "sowmiyafoods") => {
         return result.secure_url;
       }
     } catch (error) {
-      console.warn("Cloudinary upload failed (using fallback image):", error.message || error);
+      console.warn("Cloudinary upload failed:", error.message || error);
+      // Never store massive raw Base64 data URLs in MongoDB to prevent network bottlenecks
+      if (trimmed.startsWith("data:image")) {
+        return "https://res.cloudinary.com/qnbhfeck/image/upload/v1790240775/sowmiyafoods/jkt1box6mkf8qs0nhhhl.jpg";
+      }
       return trimmed;
     }
   }
@@ -81,7 +85,7 @@ export const getProducts = async (req, res) => {
   try {
     // Backward compatibility: If page/limit parameters are not supplied, return the products array directly.
     if (!req.query.page && !req.query.limit) {
-      const products = await Product.find().sort({ createdAt: -1 });
+      const products = await Product.find().sort({ createdAt: -1 }).lean();
       return res.json(products);
     }
 
@@ -90,7 +94,7 @@ export const getProducts = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const [products, total] = await Promise.all([
-      Product.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Product.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
       Product.countDocuments(),
     ]);
 

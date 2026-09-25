@@ -102,7 +102,7 @@ const FeaturedCollections = () => {
           setCachedProducts(data);
         }
       } catch (err) {
-        console.error("Failed to fetch dynamic featured collections:", err);
+        console.warn("Could not fetch live products, keeping cached/default products:", err?.message || err);
       } finally {
         if (isMounted) setLoading(false);
       }

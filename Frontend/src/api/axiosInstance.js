@@ -33,7 +33,7 @@ const getBaseURL = () => {
 
 const axiosInstance = axios.create({
   baseURL: getBaseURL(),
-  timeout: 6000, // 6s strict timeout so requests NEVER hang indefinitely!
+  timeout: 15000, // 15s timeout for resilient connections and DB queries
   headers: {
     "Content-Type": "application/json",
   },
