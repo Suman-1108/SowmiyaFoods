@@ -9,14 +9,16 @@ import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import NotifyMeModal from '../products/NotifyMeModal';
 import { getCachedProducts, setCachedProducts } from '../../utils/productCache';
+import { sortProductsBySubOrder } from '../../utils/productSubOrdering';
 
-// Canonical 10-Category Ordering requested by client
+// Canonical 11-Category Ordering requested by client
 export const CANONICAL_CATEGORIES = [
   "Millet",
   "Instant Products",
   "Noodles",
   "Semiya",
   "Flour Items",
+  "Maida",
   "Rava Sooji",
   "Pickles",
   "Thokku",
@@ -31,6 +33,7 @@ const categoryTamilNames = {
   "Noodles": "நூடுல்ஸ்",
   "Semiya": "சேமியா",
   "Flour Items": "மாவு வகைகள்",
+  "Maida": "மைதா",
   "Rava Sooji": "ரவை & சூஜி",
   "Pickles": "ஊறுகாய்",
   "Thokku": "தொக்கு",
@@ -45,13 +48,12 @@ const categoryTamilNames = {
   "spices": "பாரம்பரிய மிக்ஸ்",
   "pickles": "ஊறுகாய்",
   "Millet Products": "சிறுதானியம்",
-  "Maida": "மாவு வகைகள்",
   "Sooji": "ரவை & சூஜி",
   "MILLETS": "சிறுதானியம்",
   "puppet": "அப்பளம்",
 };
 
-// Normalize any category string or product name into one of the 10 canonical categories
+// Normalize any category string or product name into one of the 11 canonical categories
 export const normalizeCategory = (category, productName = "") => {
   const cat = (category || "").trim();
   const name = (productName || "").trim().toLowerCase();
@@ -66,7 +68,8 @@ export const normalizeCategory = (category, productName = "") => {
   if (/^instant/i.test(cat)) return "Instant Products";
   if (/^noodle/i.test(cat)) return "Noodles";
   if (/^semiya/i.test(cat) || /^vermicelli/i.test(cat) || /^semia/i.test(cat)) return "Semiya";
-  if (/^flour/i.test(cat) || /^maida/i.test(cat) || /^atta/i.test(cat)) return "Flour Items";
+  if (/^maida/i.test(cat) || /^miada/i.test(cat)) return "Maida";
+  if (/^flour/i.test(cat) || /^atta/i.test(cat)) return "Flour Items";
   if (/^rava/i.test(cat) || /^sooji/i.test(cat)) return "Rava Sooji";
   if (/^pickle/i.test(cat)) return "Pickles";
   if (/^thokku/i.test(cat)) return "Thokku";
@@ -79,7 +82,8 @@ export const normalizeCategory = (category, productName = "") => {
   if (name.includes("appalam") || name.includes("papad") || name.includes("vadam")) return "Appalam";
   if (name.includes("noodle")) return "Noodles";
   if (name.includes("semiya") || name.includes("vermicelli") || name.includes("semia")) return "Semiya";
-  if (name.includes("flour") || name.includes("atta") || name.includes("maida")) return "Flour Items";
+  if (name.includes("maida")) return "Maida";
+  if (name.includes("flour") || name.includes("atta")) return "Flour Items";
   if (name.includes("rava") || name.includes("sooji") || name.includes("kurunai")) return "Rava Sooji";
   if (name.includes("puliyotharai") || name.includes("podi") || name.includes("kali")) return "Traditional Mix";
   if (name.includes("millet") || name.includes("ragi") || name.includes("kambu") || name.includes("bajra")) return "Millet";
@@ -127,7 +131,10 @@ const getTamilSlogan = (name, category) => {
   if (lower.includes("vermicelli") || lower.includes("semiya") || lowerCat.includes("semiya")) {
     return "மென்மையான சேமியா - சுவையான உணவு";
   }
-  if (lower.includes("atta") || lower.includes("wheat") || lower.includes("maida") || lowerCat.includes("flour")) {
+  if (lower.includes("maida") || lowerCat.includes("maida") || lowerCat.includes("miada")) {
+    return "மென்மையான பரோட்டாவுக்கு - ராமர் மைதா";
+  }
+  if (lower.includes("atta") || lower.includes("wheat") || lowerCat.includes("flour")) {
     return "மென்மையானது, மிருதுவானது - ராமர் மாவு";
   }
   if (lower.includes("sooji") || lower.includes("rava") || lowerCat.includes("rava")) {
@@ -295,10 +302,10 @@ const CategoryCarouselSection = ({
             <button
               onClick={() => navigate(`/portal/products?category=${encodeURIComponent(category)}`)}
               className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-amber-900 bg-amber-100/90 hover:bg-amber-200 border border-amber-300 transition shadow-2xs cursor-pointer"
-              title={`Edit ${category} products in Admin Portal`}
+              title={`Edit ${getCategoryDisplayName(category)} products in Admin Portal`}
             >
               <Edit3 className="w-3.5 h-3.5 text-[#E05A1B]" />
-              <span>Edit {category}</span>
+              <span>Edit {getCategoryDisplayName(category)}</span>
             </button>
           )}
 
@@ -380,10 +387,14 @@ const CategoryCarouselSection = ({
               >
                 {/* 1. Flipkart-Style Solid Grey Image Box with Rating Badge */}
                 <div className="relative w-full aspect-square bg-[#F2F3F5] rounded-2xl overflow-hidden p-3 sm:p-5 flex items-center justify-center border border-gray-200/50 shadow-xs group-hover:shadow-md transition-all duration-300">
-                  {/* Packaging Presentation Badge for Pickles & Thokku */}
-                  {isPicklesOrThokku && (
-                    <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-10">
-                      {isBottle ? (
+                  {/* Packaging Presentation Badge or Custom Label */}
+                  <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-10 flex flex-col gap-1 items-start">
+                    {product.label ? (
+                      <span className="text-[10px] sm:text-[11px] font-bold text-amber-950 bg-amber-200/95 backdrop-blur-xs px-2 py-0.5 rounded-md border border-amber-400 shadow-xs">
+                        {product.label}
+                      </span>
+                    ) : isPicklesOrThokku ? (
+                      isBottle ? (
                         <span className="text-[10px] sm:text-[11px] font-bold text-amber-900 bg-amber-100/95 backdrop-blur-xs px-2 py-0.5 rounded-md border border-amber-300/80 shadow-xs">
                           Bottle
                         </span>
@@ -391,9 +402,9 @@ const CategoryCarouselSection = ({
                         <span className="text-[10px] sm:text-[11px] font-bold text-orange-900 bg-orange-100/95 backdrop-blur-xs px-2 py-0.5 rounded-md border border-orange-300/80 shadow-xs">
                           Pack
                         </span>
-                      )}
-                    </div>
-                  )}
+                      )
+                    ) : null}
+                  </div>
 
                   {/* Admin Quick Edit Pencil Button */}
                   {(isAdmin || isStaff) && (
@@ -403,7 +414,7 @@ const CategoryCarouselSection = ({
                         e.stopPropagation();
                         navigate(`/portal/products?edit=${product._id}`);
                       }}
-                      className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-20 w-7 h-7 rounded-full bg-white/95 hover:bg-white shadow-xs border border-amber-300 flex items-center justify-center text-[#E05A1B] hover:text-[#c2450d] cursor-pointer"
+                      className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 z-20 w-7 h-7 rounded-full bg-white/95 hover:bg-white shadow-xs border border-amber-300 flex items-center justify-center text-[#E05A1B] hover:text-[#c2450d] cursor-pointer"
                       title="Edit this product in Admin Portal"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
@@ -436,7 +447,7 @@ const CategoryCarouselSection = ({
                       e.stopPropagation();
                       openZoom({ ...product, name: displayTitle, image: dynamicImg });
                     }}
-                    className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 w-7 h-7 rounded-full bg-white/90 hover:bg-white shadow-xs border border-gray-200/70 flex items-center justify-center text-gray-600 hover:text-gray-900 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
+                    className={`absolute ${isAdmin || isStaff ? "top-10" : "top-2"} right-2 sm:right-2.5 w-7 h-7 rounded-full bg-white/90 hover:bg-white shadow-xs border border-gray-200/70 flex items-center justify-center text-gray-600 hover:text-gray-900 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10`}
                     title="Zoom preview"
                   >
                     <Eye className="w-3.5 h-3.5" />
@@ -450,12 +461,16 @@ const CategoryCarouselSection = ({
                     {displayTitle}
                   </h4>
 
-                  {/* Tamil Subtitle */}
-                  {product.tamilName && (
+                  {/* Quote or Tamil Subtitle */}
+                  {product.quote ? (
+                    <p className="text-[11px] sm:text-[11.5px] text-amber-700 italic font-medium truncate mt-0.5" title={product.quote}>
+                      &ldquo;{product.quote}&rdquo;
+                    </p>
+                  ) : product.tamilName ? (
                     <p className="text-[11px] sm:text-[11.5px] text-amber-800/85 font-medium truncate mt-0.5">
                       {product.tamilName}
                     </p>
-                  )}
+                  ) : null}
 
                   {/* Price Row: Strikethrough MRP + Bold Selling Price (Hidden when Out of Stock) */}
                   {isOutOfStock ? (
@@ -542,71 +557,38 @@ const CategoryCarouselSection = ({
   );
 };
 
-// =========================================================================
-// Category Sub-Ordering Helpers as requested by client
-// =========================================================================
-const getInstantProductRank = (name = "") => {
-  const n = name.toLowerCase();
-  if (n.includes("parotta")) return 1;
-  if (n.includes("murukku")) return 2;
-  if (n.includes("bajji") || n.includes("bonda")) return 3;
-  if (n.includes("adai") || n.includes("dosa")) return 4;
-  if (n.includes("idiappa") || n.includes("idiappam")) return 5;
-  if (n.includes("ulundhankali") || n.includes("ulunthankali")) return 6;
-  if (n.includes("venthayam") || n.includes("ventheyam")) return 7;
-  if (n.includes("ellu") && n.includes("podi")) return 8;
-  if ((n.includes("idli") && n.includes("podi")) || n.includes("idly podi")) return 9;
-  if (n.includes("parupu") && n.includes("podi")) return 10;
-  if (n.includes("puliyotharai") || n.includes("puliyodharai")) return 11;
-  return 99;
-};
-
-const getFlourItemRank = (name = "") => {
-  const n = name.toLowerCase();
-  if (n.includes("gram flour") || n.includes("kadalai")) return 1;
-  if (n.includes("rice flour") || n.includes("arisi maavu")) return 2;
-  if (n.includes("parotta maida")) return 5;
-  if (/\batta\b|chakki|wheat/i.test(n)) return 3;
-  if (/\bmaida\b/i.test(n)) return 4;
-  if (n.includes("corn flour") || n.includes("corn")) return 6;
-  if (n.includes("ragi")) return 7;
-  return 8;
-};
-
-const getPickleRank = (name = "") => {
-  const n = name.toLowerCase();
-  const isPack = n.includes("pack") || n.includes("pouch");
-  if (n.includes("lemon") || n.includes("elamichai") || n.includes("lime")) return isPack ? 2 : 1;
-  if (n.includes("citron") || n.includes("narthangai")) return isPack ? 4 : 3;
-  if (n.includes("sweet mango") || n.includes("sweet maangai")) return isPack ? 6 : 5;
-  if (n.includes("cut mango") || (n.includes("mango") && !n.includes("sweet"))) return isPack ? 8 : 7;
-  if (n.includes("garlic") || n.includes("poondu")) return isPack ? 10 : 9;
-  return 99;
-};
-
-const getThokkuRank = (name = "") => {
-  const n = name.toLowerCase();
-  const isPack = n.includes("pack") || n.includes("pouch");
-  if (n.includes("tomato") || n.includes("thakkali")) return isPack ? 2 : 1;
-  if (n.includes("garlic") || n.includes("poondu")) return isPack ? 4 : 3;
-  if (n.includes("onion") || n.includes("vengayam")) return isPack ? 6 : 5;
-  return 99;
-};
-
-// Helper to process raw products and group by category
+// Helper to process raw products and group by category with multiple category support
 const processAndGroupProducts = (apiProducts = [], serverCats = []) => {
+  // Extract all categories mentioned across products
+  const productCats = [];
+  apiProducts.forEach((p) => {
+    if (p.category) productCats.push(p.category);
+    if (Array.isArray(p.categories)) {
+      p.categories.forEach((c) => {
+        if (c) productCats.push(c);
+      });
+    }
+  });
+
   // 1. Overall Category Order: strictly enforce CANONICAL_CATEGORIES first
   const uniqueCats = [
     ...CANONICAL_CATEGORIES,
     ...serverCats.filter((c) => !CANONICAL_CATEGORIES.includes(c)),
-    ...apiProducts.map((p) => p.category).filter((c) => c && !CANONICAL_CATEGORIES.includes(c)),
+    ...productCats.filter((c) => c && !CANONICAL_CATEGORIES.includes(c)),
   ].filter((cat, idx, arr) => arr.indexOf(cat) === idx);
 
   const processedProducts = apiProducts.map((p) => {
     const canonicalCat = normalizeCategory(p.category, p.name);
+    // Collect all assigned categories (normalized to canonical where applicable)
+    const rawList = Array.isArray(p.categories) && p.categories.length > 0
+      ? p.categories
+      : [p.category || canonicalCat];
+    const assignedCats = Array.from(new Set(rawList.map((c) => normalizeCategory(c, p.name))));
+
     return {
       ...p,
       category: canonicalCat,
+      categories: assignedCats,
       originalCategory: p.category,
       tamilName: p.tamilName || getTamilName(p.name, canonicalCat),
       tamilSlogan: p.tamilSlogan || getTamilSlogan(p.name, canonicalCat),
@@ -621,52 +603,25 @@ const processAndGroupProducts = (apiProducts = [], serverCats = []) => {
     grouped[cat] = [];
   });
 
+  // Put product into ALL of its assigned categories so it displays across every category section!
   processedProducts.forEach((product) => {
-    const cat = product.category;
-    if (!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push(product);
+    const assigned = product.categories && product.categories.length > 0
+      ? product.categories
+      : [product.category];
+
+    const uniqueAssigned = Array.from(new Set(assigned));
+    uniqueAssigned.forEach((cat) => {
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(product);
+    });
   });
 
-  // 2. Product Sub-Ordering Within Categories
-  // Instant Products
-  if (grouped["Instant Products"]) {
-    grouped["Instant Products"].sort((a, b) => {
-      const rankA = getInstantProductRank(a.name);
-      const rankB = getInstantProductRank(b.name);
-      if (rankA !== rankB) return rankA - rankB;
-      return (a.price || 0) - (b.price || 0);
-    });
-  }
-
-  // Flour Items
-  if (grouped["Flour Items"]) {
-    grouped["Flour Items"].sort((a, b) => {
-      const rankA = getFlourItemRank(a.name);
-      const rankB = getFlourItemRank(b.name);
-      if (rankA !== rankB) return rankA - rankB;
-      return (a.price || 0) - (b.price || 0);
-    });
-  }
-
-  // Pickles
-  if (grouped["Pickles"]) {
-    grouped["Pickles"].sort((a, b) => {
-      const rankA = getPickleRank(a.name);
-      const rankB = getPickleRank(b.name);
-      if (rankA !== rankB) return rankA - rankB;
-      return (a.price || 0) - (b.price || 0);
-    });
-  }
-
-  // Thokku
-  if (grouped["Thokku"]) {
-    grouped["Thokku"].sort((a, b) => {
-      const rankA = getThokkuRank(a.name);
-      const rankB = getThokkuRank(b.name);
-      if (rankA !== rankB) return rankA - rankB;
-      return (a.price || 0) - (b.price || 0);
-    });
-  }
+  // 2. Product Sub-Ordering Within ALL Categories using canonical sort
+  uniqueCats.forEach((cat) => {
+    if (grouped[cat] && grouped[cat].length > 0) {
+      grouped[cat] = sortProductsBySubOrder(grouped[cat], cat);
+    }
+  });
 
   return { uniqueCats, processedProducts, grouped };
 };
@@ -809,6 +764,9 @@ const ProductRangeCarousel = () => {
       "Noodles": "Noodles",
       "Semiya": "Semiya",
       "Flour Items": "Flour Items",
+      "Maida": "Maida Items",
+      "Maida Items": "Maida Items",
+      "Maida": "Maida Items",
       "Rava Sooji": "Rava Sooji",
       "Pickles": "Pickles",
       "Thokku": "Thokku",
@@ -823,7 +781,6 @@ const ProductRangeCarousel = () => {
       "spices": "Traditional Mix",
       "pickles": "Pickles",
       "Millet Products": "Millet",
-      "Maida": "Flour Items",
       "Sooji": "Rava Sooji",
       "MILLETS": "Millet",
       "puppet": "Appalam",

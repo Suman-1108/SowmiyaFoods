@@ -9,6 +9,7 @@ import { useWishlist } from "../../context/WishlistContext.jsx";
 import ph from "../../assets/image.png";
 import toast from "react-hot-toast";
 import NotifyMeModal from "./NotifyMeModal";
+import { sortProductsBySubOrder } from "../../utils/productSubOrdering";
 
 const CategoryProducts = () => {
   const { categoryName } = useParams();
@@ -26,7 +27,7 @@ const CategoryProducts = () => {
     const fetchCategoryProducts = async () => {
       try {
         const data = await getProductsByCategory(decodedCategory);
-        setProducts(data);
+        setProducts(sortProductsBySubOrder(data, decodedCategory));
       } catch (error) {
         console.error("Error fetching category products:", error);
       } finally {
@@ -77,6 +78,14 @@ const CategoryProducts = () => {
                   }}
                 >
                   <div className="relative">
+                    {/* Badge: Custom label from Admin */}
+                    {product.label && (
+                      <div className="absolute top-2 left-2 z-10">
+                        <span className="text-[10px] sm:text-[11px] font-bold text-amber-950 bg-amber-200/95 backdrop-blur-xs px-2 py-0.5 rounded-md border border-amber-400 shadow-xs">
+                          {product.label}
+                        </span>
+                      </div>
+                    )}
                     <img
                       src={product.image || ph}
                       alt={product.name}
@@ -117,6 +126,15 @@ const CategoryProducts = () => {
                             <span className="text-md font-bold">{extractWeight(product.name)}</span>
                           )}
                         </h3>
+                        {product.quote ? (
+                          <p className="text-[11px] text-amber-700 italic truncate" title={product.quote}>
+                            &ldquo;{product.quote}&rdquo;
+                          </p>
+                        ) : product.tamilName ? (
+                          <p className="text-[11px] text-amber-800/80 truncate">
+                            {product.tamilName}
+                          </p>
+                        ) : null}
                         <p className="text-xs xs:text-sm sm:text-sm text-gray-500">{product.category}</p>
 
                         {/* Price & Action Button */}

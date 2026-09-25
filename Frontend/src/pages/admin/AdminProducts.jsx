@@ -37,8 +37,10 @@ import { getCachedProducts, setCachedProducts } from "../../utils/productCache";
 import ProductModal from "../../components/admin/ProductModal";
 import BulkImportModal from "../../components/admin/BulkImportModal";
 import TableSortControl from "../../components/admin/TableSortControl";
+import { getProductSubOrderRank } from "../../utils/productSubOrdering";
 
 const PRODUCT_SORT_OPTIONS = [
+  { value: "suborder", label: "Category Sub-Ordering (Default)" },
   { value: "newest", label: "Recent First (Newest)" },
   { value: "oldest", label: "Oldest First" },
   { value: "name_asc", label: "Name: A to Z" },
@@ -201,14 +203,18 @@ const AdminProducts = () => {
     return result.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
   }, [serverCategories, products]);
 
-  // Map product counts per category
+  // Map product counts per category (counting products across multiple categories)
   const productCountByCategory = useMemo(() => {
     const map = {};
     products.forEach((p) => {
-      if (p.category) {
-        const norm = LEGACY_CATEGORY_MAP[p.category.toLowerCase().trim()] || p.category.trim();
+      const cats = Array.isArray(p.categories) && p.categories.length > 0
+        ? p.categories
+        : (p.category ? [p.category] : []);
+      cats.forEach((catItem) => {
+        if (!catItem) return;
+        const norm = LEGACY_CATEGORY_MAP[catItem.toLowerCase().trim()] || catItem.trim();
         map[norm] = (map[norm] || 0) + 1;
-      }
+      });
     });
     return map;
   }, [products]);
@@ -234,7 +240,10 @@ const AdminProducts = () => {
         p.description?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCategory =
-        selectedCategory === "ALL" || p.category === selectedCategory;
+        selectedCategory === "ALL" ||
+        (Array.isArray(p.categories) &&
+          p.categories.some((c) => c?.toLowerCase().trim() === selectedCategory.toLowerCase().trim())) ||
+        p.category?.toLowerCase().trim() === selectedCategory.toLowerCase().trim();
 
       const matchesStock =
         stockFilter === "ALL" ||
@@ -245,6 +254,12 @@ const AdminProducts = () => {
     });
 
     return [...list].sort((a, b) => {
+      if (sortBy === "suborder" || (selectedCategory !== "ALL" && sortBy === "newest")) {
+        const catForSort = selectedCategory !== "ALL" ? selectedCategory : "";
+        const rankA = getProductSubOrderRank(catForSort || a.category, a.name);
+        const rankB = getProductSubOrderRank(catForSort || b.category, b.name);
+        if (rankA !== rankB) return rankA - rankB;
+      }
       if (sortBy === "name_asc") {
         return (a.name || "").localeCompare(b.name || "");
       }
@@ -542,23 +557,55 @@ const AdminProducts = () => {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <h4 className="font-bold text-slate-900 text-xs sm:text-sm group-hover:text-[#e8703b] transition-colors truncate max-w-xs sm:max-w-md">
-                              {product.name}
-                            </h4>
-                            {product.description && (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <h4 className="font-bold text-slate-900 text-xs sm:text-sm group-hover:text-[#e8703b] transition-colors truncate max-w-xs sm:max-w-md">
+                                {product.name}
+                              </h4>
+                              {product.label && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-orange-100 text-[#e8703b] border border-orange-200 shadow-2xs">
+                                  {product.label}
+                                </span>
+                              )}
+                            </div>
+                            {product.quote ? (
+                              <p className="text-[11px] text-amber-700 italic truncate max-w-xs sm:max-w-md mt-0.5">
+                                “{product.quote}”
+                              </p>
+                            ) : product.tamilName ? (
+                              <p className="text-[11px] text-slate-500 truncate max-w-xs sm:max-w-md mt-0.5">
+                                {product.tamilName}
+                              </p>
+                            ) : product.description ? (
                               <p className="text-[11px] text-slate-400 truncate max-w-xs sm:max-w-md mt-0.5">
                                 {product.description}
                               </p>
-                            )}
+                            ) : null}
                           </div>
                         </div>
                       </td>
 
                       {/* Category */}
                       <td className="py-3.5 px-4">
-                        <span className="inline-block px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                          {product.category || "General"}
-                        </span>
+                        <div className="flex flex-wrap gap-1 max-w-[180px]">
+                          {Array.isArray(product.categories) && product.categories.length > 0 ? (
+                            product.categories.map((c) => (
+                              <span
+                                key={c}
+                                className={`inline-block px-2 py-0.5 rounded-lg text-[10.5px] font-bold border ${
+                                  c === product.category
+                                    ? "bg-orange-50 text-[#e8703b] border-orange-200"
+                                    : "bg-slate-100 text-slate-700 border-slate-200"
+                                }`}
+                              >
+                                {c}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="inline-block px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                              {product.category || "General"}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Price & MRP */}

@@ -43,6 +43,12 @@ const CATEGORIES = [
     tamil: "மாவு வகைகள்",
   },
   {
+    id: "maida",
+    apiCategory: "Maida",
+    name: "Maida Items",
+    tamil: "மைதா வகைகள்",
+  },
+  {
     id: "rava-sooji",
     apiCategory: "Rava Sooji",
     name: "Rava Sooji",

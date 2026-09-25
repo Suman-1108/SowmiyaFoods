@@ -28,6 +28,7 @@ import {
   Mail,
   MessageSquarePlus,
   X,
+  Quote,
 } from "lucide-react";
 import { getProductById, getProductReviews, addProductReview } from "../../api/productApi";
 import axiosInstance from "../../api/axiosInstance";
@@ -50,7 +51,9 @@ const getTamilSlogan = (name = "") => {
     return "ருசியான நொடிப்பொழுதில். Immersive Taste. Pure Quality.";
   if (lower.includes("vermicelli") || lower.includes("semiya"))
     return "மென்மையான பாரம்பரிய சேமியா. Homemade Authentic.";
-  if (lower.includes("atta") || lower.includes("wheat") || lower.includes("maida"))
+  if (lower.includes("maida"))
+    return "மென்மையான பரோட்டாவுக்கு ஏற்ற உயர் தர மைதா. Super Soft.";
+  if (lower.includes("atta") || lower.includes("wheat"))
     return "மென்மையானது, சத்தானது. Traditional Stone-Ground.";
   if (lower.includes("sooji") || lower.includes("rava"))
     return "சூப்பர் சுவையான ரவை. Fluffy & Delicious.";
@@ -443,7 +446,9 @@ const ProductDetails = () => {
   const mrp = product.mrp !== undefined && product.mrp !== null ? Number(product.mrp) : (Math.round(price * 1.33) || price + 35);
   const saveAmount = mrp - price;
   const discountPercent = Math.round((saveAmount / mrp) * 100);
-  const tamilTagline = getTamilSlogan(product.name);
+  const tamilTagline = product.tamilSlogan || getTamilSlogan(product.name);
+  const displayTamilName = product.tamilName || null;
+  const displayLabel = product.label || "New";
   const isOutOfStock =
     product.inStock === false ||
     (product.stock !== undefined && Number(product.stock) <= 0);
@@ -516,14 +521,14 @@ const ProductDetails = () => {
                   <span className="w-2.5 h-2.5 bg-emerald-600 rounded-full"></span>
                 </div>
 
-                {/* New Product Pill */}
+                {/* Product Badge Pill */}
                 {isOutOfStock ? (
                   <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-rose-600 text-white shadow-2xs">
                     Out of Stock
                   </span>
                 ) : (
                   <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-[#e8703b] text-white shadow-2xs">
-                    New
+                    {displayLabel}
                   </span>
                 )}
               </div>
@@ -585,11 +590,17 @@ const ProductDetails = () => {
 
           {/* Right Column: Product Buy Box (Cols 7-12) */}
           <div className="lg:col-span-6 flex flex-col justify-center">
-            {/* Category / Brand Eyebrow */}
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200/60">
-                {product.category || "Traditional Food"}
-              </span>
+            {/* Category / Brand Eyebrow with multiple category pills */}
+            <div className="flex flex-wrap items-center gap-1.5 mb-2">
+              {(product.categories && product.categories.length > 0 ? product.categories : [product.category || "Traditional Food"]).map((cat, idx) => (
+                <Link
+                  key={idx}
+                  to={`/products?category=${encodeURIComponent(cat)}`}
+                  className="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-0.5 rounded-md border border-amber-200/60 transition cursor-pointer"
+                >
+                  {cat}
+                </Link>
+              ))}
               <span className="text-xs text-gray-400 font-medium">·</span>
               <span className="text-xs text-gray-500 font-medium flex items-center gap-1">
                 <Award className="w-3.5 h-3.5 text-amber-600" />
@@ -598,9 +609,16 @@ const ProductDetails = () => {
             </div>
 
             {/* Product Title matching bold Shopify Plus style */}
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight mb-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight mb-1">
               {product.name}
             </h1>
+
+            {/* Tamil Product Title if provided */}
+            {displayTamilName && (
+              <p className="text-base sm:text-lg font-semibold text-slate-700 mb-1">
+                {displayTamilName}
+              </p>
+            )}
 
             {/* Tamil Slogan / Subtitle */}
             <p className="text-sm sm:text-base font-medium text-amber-700 mb-3">
@@ -623,6 +641,23 @@ const ProductDetails = () => {
                 Based on 1,250 Reviews
               </a>
             </div>
+
+            {/* Featured Quote Banner */}
+            {product.quote && (
+              <div className="mb-5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-transparent border-l-4 border-[#e8703b] shadow-2xs">
+                <div className="flex items-start gap-2.5">
+                  <Quote className="w-5 h-5 text-[#e8703b] shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm sm:text-base font-semibold text-slate-800 italic leading-snug">
+                      "{product.quote}"
+                    </p>
+                    <span className="text-[10px] font-bold text-[#e8703b] tracking-wider uppercase mt-1 block">
+                      Featured Highlight
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Pricing Area (Hidden when out of stock) */}
             {isOutOfStock ? (

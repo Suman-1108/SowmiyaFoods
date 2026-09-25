@@ -15,6 +15,8 @@ const categoryTamilNames = {
   "Noodles": "நூடுல்ஸ்",
   "Semiya": "சேமியா",
   "Flour Items": "மாவு வகைகள்",
+  "Maida": "மைதா வகைகள்",
+  "Maida Items": "மைதா வகைகள்",
   "Rava Sooji": "ரவை & சூஜி",
   "Pickles": "ஊறுகாய்",
   "Thokku": "தொக்கு",
@@ -271,6 +273,8 @@ const LatestProducts = () => {
               let badge = null;
               if (isOutOfStock) {
                 badge = { text: "Out of Stock", bg: "bg-rose-600 text-white font-bold" };
+              } else if (product.label) {
+                badge = { text: product.label, bg: "bg-[#e8703b] text-white" };
               } else {
                 badge = { text: "New", bg: "bg-[#e8703b] text-white" };
               }
@@ -327,9 +331,9 @@ const LatestProducts = () => {
                         {product.name}
                       </h3>
 
-                      {/* Tamil Name Subtitle */}
+                      {/* Tamil Name / Quote Subtitle */}
                       <p className="text-[11px] text-gray-400 truncate mt-0.5">
-                        {product.tamilName}
+                        {product.quote ? `"${product.quote}"` : (product.tamilName || getTamilName(product.name, product.category))}
                       </p>
 
                       {/* Price Row (Hidden when Out of Stock) */}

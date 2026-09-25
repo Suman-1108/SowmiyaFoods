@@ -24,6 +24,7 @@ const categoryOrder = [
   "Noodles",
   "Semiya",
   "Flour Items",
+  "Maida",
   "Rava Sooji",
   "Pickles",
   "Thokku",
@@ -43,6 +44,12 @@ export const syncSeedFilesFromDb = async () => {
     const cleanProducts = rawProducts.map((p) => ({
       name: p.name,
       category: p.category || "Flour Items",
+      categories:
+        Array.isArray(p.categories) && p.categories.length > 0
+          ? p.categories
+          : p.category
+          ? [p.category]
+          : [],
       price: Number(p.price) || 0,
       mrp:
         p.mrp !== undefined && p.mrp !== ""
@@ -55,6 +62,10 @@ export const syncSeedFilesFromDb = async () => {
       lowStockThreshold:
         p.lowStockThreshold !== undefined ? Number(p.lowStockThreshold) : 10,
       inStock: p.inStock !== undefined ? Boolean(p.inStock) : true,
+      label: p.label || "",
+      quote: p.quote || "",
+      tamilName: p.tamilName || "",
+      tamilSlogan: p.tamilSlogan || "",
     }));
 
     // Find all distinct categories, preserving categoryOrder first

@@ -5,6 +5,7 @@ import StockNotification from "../models/StockNotification.js";
 import Review from "../models/Review.js";
 import cloudinary from "../config/cloudinaryConfig.js";
 import { syncSeedFilesFromDb } from "../utils/seedSync.js";
+import { sortProductsBySubOrder } from "../utils/productSubOrdering.js";
 
 // Helper to convert product name to slug
 const slugify = (text) => {
@@ -178,20 +179,30 @@ export const getProductsByCategory = async (req, res) => {
   try {
     const { category } = req.params;
     const search = req.query.search || "";
-    const decodedCategory = decodeURIComponent(category);
+    const decodedCategory = decodeURIComponent(category).trim();
 
     // If category is "All", return all products that match the search term
     const filter = decodedCategory.toLowerCase() === "all"
-      ? { name: { $regex: new RegExp(search, "i") } }
+      ? (search ? { name: { $regex: new RegExp(search, "i") } } : {})
       : {
-          category: { $regex: new RegExp(`^${decodedCategory}$`, "i") }, // exact match (case-insensitive)
-          name: { $regex: new RegExp(search, "i") },       // match name (optional search)
+          $and: [
+            {
+              $or: [
+                { category: { $regex: new RegExp(`^${decodedCategory}$`, "i") } },
+                { categories: { $elemMatch: { $regex: new RegExp(`^${decodedCategory}$`, "i") } } },
+              ],
+            },
+            ...(search ? [{ name: { $regex: new RegExp(search, "i") } }] : []),
+          ],
         };
 
-    const products = await Product.find(filter);
-    console.log(`Category filter: ${decodedCategory}, Products found: ${products.length}`);
+    const rawProducts = await Product.find(filter).lean();
+    console.log(`Category filter: ${decodedCategory}, Products found: ${rawProducts.length}`);
 
-    res.status(200).json(products);
+    // Sort products by canonical sub-ordering within this category
+    const sortedProducts = sortProductsBySubOrder(rawProducts, decodedCategory);
+
+    res.status(200).json(sortedProducts);
   } catch (error) {
     console.error("Error fetching products by category:", error);
     res.status(500).json({ message: "Failed to fetch products" });
@@ -240,16 +251,37 @@ export const createProduct = async (req, res) => {
       price,
       mrp,
       category,
+      categories,
       image,
       stock,
       lowStockThreshold,
       inStock,
+      label,
+      quote,
+      quotes,
+      tamilName,
+      tamilSlogan,
     } = req.body;
 
     if (!name || !price) {
       return res.status(400).json({
         message: "Name and Price are required.",
       });
+    }
+
+    // Process multiple categories
+    let categoryList = [];
+    if (Array.isArray(categories)) {
+      categoryList = categories.map((c) => String(c).trim()).filter(Boolean);
+    } else if (typeof categories === "string") {
+      categoryList = categories.split(",").map((c) => c.trim()).filter(Boolean);
+    }
+    if (category && typeof category === "string" && !categoryList.includes(category.trim())) {
+      categoryList.unshift(category.trim());
+    }
+    const primaryCategory = category ? category.trim() : (categoryList[0] || "General");
+    if (categoryList.length === 0 && primaryCategory) {
+      categoryList.push(primaryCategory);
     }
 
     // Upload to Cloudinary if image is base64
@@ -267,17 +299,24 @@ export const createProduct = async (req, res) => {
         ? Number(mrp)
         : parsedPrice;
 
+    const finalQuote = (quote !== undefined ? quote : quotes) || "";
+
     const product = new Product({
       name,
       description,
       price: parsedPrice,
       mrp: parsedMrp,
-      category,
+      category: primaryCategory,
+      categories: categoryList,
       image: imageUrl,
       slug,
       stock: parsedStock,
       lowStockThreshold: parsedThreshold,
       inStock: parsedInStock,
+      label: label ? String(label).trim() : "",
+      quote: finalQuote ? String(finalQuote).trim() : "",
+      tamilName: tamilName ? String(tamilName).trim() : "",
+      tamilSlogan: tamilSlogan ? String(tamilSlogan).trim() : "",
     });
 
     const savedProduct = await product.save();
@@ -299,7 +338,23 @@ export const createProduct = async (req, res) => {
 // @desc Update a product (Admin only)
 export const updateProduct = async (req, res) => {
   try {
-    const { name, description, price, mrp, category, image, stock, lowStockThreshold, inStock } = req.body;
+    const {
+      name,
+      description,
+      price,
+      mrp,
+      category,
+      categories,
+      image,
+      stock,
+      lowStockThreshold,
+      inStock,
+      label,
+      quote,
+      quotes,
+      tamilName,
+      tamilSlogan,
+    } = req.body;
 
     const product = await Product.findById(req.params.id);
     if (!product) {
@@ -316,7 +371,29 @@ export const updateProduct = async (req, res) => {
     if (mrp !== undefined) {
       product.mrp = mrp !== "" && !isNaN(Number(mrp)) ? Number(mrp) : product.price;
     }
-    product.category = category !== undefined ? category : product.category;
+
+    if (categories !== undefined || category !== undefined) {
+      let categoryList = [];
+      if (Array.isArray(categories)) {
+        categoryList = categories.map((c) => String(c).trim()).filter(Boolean);
+      } else if (typeof categories === "string") {
+        categoryList = categories.split(",").map((c) => c.trim()).filter(Boolean);
+      } else if (Array.isArray(product.categories) && product.categories.length > 0) {
+        categoryList = [...product.categories];
+      }
+
+      if (category && typeof category === "string" && !categoryList.includes(category.trim())) {
+        categoryList.unshift(category.trim());
+      }
+
+      if (categoryList.length > 0) {
+        product.categories = categoryList;
+        product.category = category ? category.trim() : (categoryList[0] || product.category);
+      } else if (category) {
+        product.category = category.trim();
+        product.categories = [category.trim()];
+      }
+    }
     
     if (stock !== undefined && stock !== "") {
       product.stock = Math.max(0, Number(stock));
@@ -331,6 +408,23 @@ export const updateProduct = async (req, res) => {
 
     if (inStock !== undefined) {
       product.inStock = Boolean(inStock);
+    }
+
+    if (label !== undefined) {
+      product.label = String(label).trim();
+    }
+
+    const incomingQuote = quote !== undefined ? quote : quotes;
+    if (incomingQuote !== undefined) {
+      product.quote = String(incomingQuote).trim();
+    }
+
+    if (tamilName !== undefined) {
+      product.tamilName = String(tamilName).trim();
+    }
+
+    if (tamilSlogan !== undefined) {
+      product.tamilSlogan = String(tamilSlogan).trim();
     }
 
     if (image) {
@@ -984,17 +1078,33 @@ export const bulkImportProducts = async (req, res) => {
         // Generate unique slug
         const slug = await generateUniqueSlug(name);
 
+        const rawCats = item.categories || item.category || "General";
+        let parsedCategories = [];
+        if (Array.isArray(rawCats)) {
+          parsedCategories = rawCats.map((c) => String(c).trim()).filter(Boolean);
+        } else if (typeof rawCats === "string") {
+          parsedCategories = rawCats.split(",").map((c) => c.trim()).filter(Boolean);
+        }
+        if (category && !parsedCategories.includes(category)) {
+          parsedCategories.unshift(category);
+        }
+
         const newProduct = new Product({
           name,
           price,
           mrp,
-          category,
+          category: category || (parsedCategories[0] || "General"),
+          categories: parsedCategories,
           description,
           image: imageUrl,
           slug,
           stock,
           lowStockThreshold,
           inStock,
+          label: (item.label || item.badge || "").trim(),
+          quote: (item.quote || item.quotes || item.tagline || "").trim(),
+          tamilName: (item.tamilName || item["tamil name"] || "").trim(),
+          tamilSlogan: (item.tamilSlogan || item["tamil slogan"] || "").trim(),
         });
 
         const saved = await newProduct.save();

@@ -25,6 +25,7 @@ import Footer from "../Footer";
 import NotifyMeModal from "./NotifyMeModal";
 import ProductFilterSidebar from "./ProductFilterSidebar";
 import { getCachedProducts, setCachedProducts } from "../../utils/productCache";
+import { sortProductsBySubOrder } from "../../utils/productSubOrdering";
 
 const AllProducts = () => {
   const cachedData = useRef(getCachedProducts()).current;
@@ -98,11 +99,18 @@ const AllProducts = () => {
     const weightMap = {};
 
     products.forEach((p) => {
-      // Category count
-      const cat = p.category?.trim();
-      if (cat) {
-        catMap[cat] = (catMap[cat] || 0) + 1;
+      // Category count (multi-category aware)
+      const assigned = [];
+      if (p.category?.trim()) assigned.push(p.category.trim());
+      if (Array.isArray(p.categories)) {
+        p.categories.forEach((c) => {
+          if (c && c.trim()) assigned.push(c.trim());
+        });
       }
+      const uniqueCats = Array.from(new Set(assigned));
+      uniqueCats.forEach((cat) => {
+        catMap[cat] = (catMap[cat] || 0) + 1;
+      });
 
       // Weight count
       const w = extractWeight(p.name);
@@ -156,12 +164,14 @@ const AllProducts = () => {
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
-    // 1. Category filter (multi-select)
+    // 1. Category filter (multi-select, matching primary or multiple categories)
     if (selectedCategories.length > 0) {
-      const lowerCats = selectedCategories.map((c) => c.toLowerCase());
-      result = result.filter(
-        (p) => p.category && lowerCats.includes(p.category.toLowerCase().trim())
-      );
+      const lowerCats = selectedCategories.map((c) => c.toLowerCase().trim());
+      result = result.filter((p) => {
+        const primaryMatch = p.category && lowerCats.includes(p.category.toLowerCase().trim());
+        const multiMatch = Array.isArray(p.categories) && p.categories.some((c) => lowerCats.includes(c.toLowerCase().trim()));
+        return primaryMatch || multiMatch;
+      });
     }
 
     // 2. Search filter (matches name, category, description)
@@ -219,6 +229,9 @@ const AllProducts = () => {
       result.sort((a, b) => (Number(b.rating || 0) - Number(a.rating || 0)));
     } else if (sortBy === "newest") {
       result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    } else if (sortBy === "suborder" || (selectedCategories.length === 1 && (sortBy === "featured" || !sortBy))) {
+      const activeCat = selectedCategories.length === 1 ? selectedCategories[0] : "";
+      result = sortProductsBySubOrder(result, activeCat);
     }
 
     return result;
@@ -571,13 +584,15 @@ const AllProducts = () => {
                       product.inStock === false ||
                       (product.stock !== undefined && Number(product.stock) <= 0);
 
-                    // Badge assignment: only "New" product pill (Best Seller, Sale, Pure removed)
+                    // Badge assignment: prioritize product.label, fallback to "New"
                     let badge = null;
                     if (isOutOfStock) {
                       badge = {
                         text: "Out of Stock",
                         bg: "bg-rose-600 text-white font-bold",
                       };
+                    } else if (product.label) {
+                      badge = { text: product.label, bg: "bg-[#e8703b] text-white" };
                     } else {
                       badge = { text: "New", bg: "bg-[#e8703b] text-white" };
                     }
@@ -641,7 +656,7 @@ const AllProducts = () => {
                           </h3>
 
                           <p className="text-[11px] text-gray-400 truncate mt-0.5">
-                            {product.category || "Grocery"}
+                            {product.quote ? `"${product.quote}"` : product.tamilName ? product.tamilName : (product.category || "Grocery")}
                           </p>
 
                           {/* Price Row */}

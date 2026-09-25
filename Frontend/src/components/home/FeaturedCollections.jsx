@@ -14,6 +14,8 @@ const categoryTamilNames = {
   "Noodles": "நூடுல்ஸ்",
   "Semiya": "சேமியா",
   "Flour Items": "மாவு வகைகள்",
+  "Maida": "மைதா வகைகள்",
+  "Maida Items": "மைதா வகைகள்",
   "Rava Sooji": "ரவை & சூஜி",
   "Pickles": "ஊறுகாய்",
   "Thokku": "தொக்கு",
