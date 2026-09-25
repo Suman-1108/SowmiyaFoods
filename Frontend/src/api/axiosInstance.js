@@ -9,14 +9,14 @@ const getBaseURL = () => {
       window.location.hostname.endsWith(".localhost");
 
     if (isLocal) {
-      const envUrl = import.meta.env.VITE_API_URL;
+      const envUrl = typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL;
       if (envUrl && (envUrl.includes("localhost") || envUrl.includes("127.0.0.1"))) {
         return envUrl;
       }
       return "http://localhost:5000/api";
     }
 
-    const envUrl = import.meta.env.VITE_API_URL;
+    const envUrl = typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL;
     if (envUrl && !envUrl.startsWith("/")) {
       return envUrl;
     }
@@ -28,7 +28,7 @@ const getBaseURL = () => {
   }
 
   // In production: use VITE_API_URL if configured, otherwise default to direct DigitalOcean API
-  return import.meta.env.VITE_API_URL || "https://api.sowmiyafoods.com/api";
+  return (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) || "https://api.sowmiyafoods.com/api";
 };
 
 const axiosInstance = axios.create({
@@ -51,7 +51,7 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Gracefully intercept HTML responses (e.g. Vercel SSO preview protection or 404 HTML)
+// Gracefully intercept HTML responses and handle 401 Unauthorized sessions
 axiosInstance.interceptors.response.use(
   (response) => {
     if (
@@ -64,7 +64,21 @@ axiosInstance.interceptors.response.use(
     }
     return response;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    if (error.response?.status === 401) {
+      const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+      const isPortalRoute = pathname.startsWith("/portal") || pathname.startsWith("/admin");
+      const isLoginRoute = pathname.includes("/login") || pathname.includes("signin");
+
+      if (isPortalRoute && !isLoginRoute) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/portal/login";
+      }
+    }
+    return Promise.reject(error);
+  }
 );
 
 export default axiosInstance;
+

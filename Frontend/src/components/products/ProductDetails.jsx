@@ -527,7 +527,10 @@ const ProductDetails = () => {
                     Out of Stock
                   </span>
                 ) : (
-                  <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-[#e8703b] text-white shadow-2xs">
+                  <span
+                    className="px-3 py-1 rounded-full text-xs font-bold tracking-wide text-white shadow-2xs"
+                    style={{ backgroundColor: product.badgeColor || "#e8703b" }}
+                  >
                     {displayLabel}
                   </span>
                 )}

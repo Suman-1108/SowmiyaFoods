@@ -58,13 +58,8 @@ export const normalizeCategory = (category, productName = "") => {
   const cat = (category || "").trim();
   const name = (productName || "").trim().toLowerCase();
 
-  // Explicit category matching
-  if (/^millet/i.test(cat) || cat.toUpperCase() === "MILLETS" || cat.toUpperCase() === "MILLET PRODUCTS") {
-    if (name.includes("noodle")) return "Noodles";
-    if (name.includes("semiya") || name.includes("vermicelli")) return "Semiya";
-    return "Millet";
-  }
-
+  // Explicit category matching - never overwrite an explicit category with a heuristic!
+  if (/^millet/i.test(cat) || cat.toUpperCase() === "MILLETS" || cat.toUpperCase() === "MILLET PRODUCTS") return "Millet";
   if (/^instant/i.test(cat)) return "Instant Products";
   if (/^noodle/i.test(cat)) return "Noodles";
   if (/^semiya/i.test(cat) || /^vermicelli/i.test(cat) || /^semia/i.test(cat)) return "Semiya";
@@ -76,18 +71,20 @@ export const normalizeCategory = (category, productName = "") => {
   if (/^traditional/i.test(cat) || /^spices/i.test(cat) || /^podi/i.test(cat)) return "Traditional Mix";
   if (/^appalam/i.test(cat) || /^puppet/i.test(cat) || /^papad/i.test(cat)) return "Appalam";
 
-  // Match by product name if category is generic
-  if (name.includes("pickle") || name.includes("oorugai")) return "Pickles";
-  if (name.includes("thokku")) return "Thokku";
-  if (name.includes("appalam") || name.includes("papad") || name.includes("vadam")) return "Appalam";
-  if (name.includes("noodle")) return "Noodles";
-  if (name.includes("semiya") || name.includes("vermicelli") || name.includes("semia")) return "Semiya";
-  if (name.includes("maida")) return "Maida";
-  if (name.includes("flour") || name.includes("atta")) return "Flour Items";
-  if (name.includes("rava") || name.includes("sooji") || name.includes("kurunai")) return "Rava Sooji";
-  if (name.includes("puliyotharai") || name.includes("podi") || name.includes("kali")) return "Traditional Mix";
-  if (name.includes("millet") || name.includes("ragi") || name.includes("kambu") || name.includes("bajra")) return "Millet";
-  if (name.includes("parotta") || name.includes("instant") || name.includes("dosa mix") || name.includes("adai")) return "Instant Products";
+  // Only if category is missing or empty, match by product name as fallback
+  if (!cat || cat.toLowerCase() === "general" || cat.toLowerCase() === "other") {
+    if (name.includes("pickle") || name.includes("oorugai")) return "Pickles";
+    if (name.includes("thokku")) return "Thokku";
+    if (name.includes("appalam") || name.includes("papad") || name.includes("vadam")) return "Appalam";
+    if (name.includes("noodle")) return "Noodles";
+    if (name.includes("semiya") || name.includes("vermicelli") || name.includes("semia")) return "Semiya";
+    if (name.includes("maida")) return "Maida";
+    if (name.includes("flour") || name.includes("atta")) return "Flour Items";
+    if (name.includes("rava") || name.includes("sooji") || name.includes("kurunai")) return "Rava Sooji";
+    if (name.includes("puliyotharai") || name.includes("podi") || name.includes("kali")) return "Traditional Mix";
+    if (name.includes("millet") || name.includes("ragi") || name.includes("kambu") || name.includes("bajra")) return "Millet";
+    if (name.includes("parotta") || name.includes("instant") || name.includes("dosa mix") || name.includes("adai")) return "Instant Products";
+  }
 
   return cat || "Flour Items";
 };
@@ -367,6 +364,41 @@ const CategoryCarouselSection = ({
             const isBottle = isBottlePresentation(product);
             const isPack = isPackPresentation(product);
 
+            // Determine Product Badge (prioritizes Out of Stock, then Admin Label/Preset/Custom Color, fallback to New)
+            let badge = null;
+            if (isOutOfStock) {
+              badge = { text: "Out of Stock", bgClass: "bg-rose-600 text-white font-bold", style: {} };
+            } else if (product.label || product.badge) {
+              const lbl = (product.label || product.badge).trim();
+              const customColor = (product.badgeColor || "").trim();
+              if (customColor) {
+                badge = {
+                  text: lbl,
+                  bgClass: "text-white font-bold shadow-xs",
+                  style: { backgroundColor: customColor },
+                };
+              } else {
+                const lowerLbl = lbl.toLowerCase();
+                let bgClass = "bg-[#e8703b] text-white font-bold";
+                if (lowerLbl.includes("bestseller") || lowerLbl.includes("best seller")) {
+                  bgClass = "bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold";
+                } else if (lowerLbl.includes("trending")) {
+                  bgClass = "bg-gradient-to-r from-orange-500 to-rose-500 text-white font-bold";
+                } else if (lowerLbl.includes("offer") || lowerLbl.includes("special")) {
+                  bgClass = "bg-rose-500 text-white font-bold";
+                } else if (lowerLbl.includes("organic") || lowerLbl.includes("pure")) {
+                  bgClass = "bg-emerald-600 text-white font-bold";
+                } else if (lowerLbl.includes("hot")) {
+                  bgClass = "bg-red-600 text-white font-bold";
+                } else if (lowerLbl.includes("chef")) {
+                  bgClass = "bg-indigo-600 text-white font-bold";
+                }
+                badge = { text: lbl, bgClass, style: {} };
+              }
+            } else {
+              badge = { text: "New", bgClass: "bg-[#e8703b] text-white font-semibold", style: {} };
+            }
+
             // For Pack presentation in Pickles or Thokku, weight should NOT be mentioned/displayed!
             let displayTitle = product.name;
             if (isPicklesOrThokku && isPack) {
@@ -381,29 +413,33 @@ const CategoryCarouselSection = ({
 
             return (
               <div
-                key={product._id || `${category}-${pIdx}`}
+                key={`${category}-${product._id || pIdx}-${pIdx}`}
                 onClick={() => navigate(product._id ? `/product/${product._id}` : `/products`)}
                 className="flex-shrink-0 w-[calc(50%-8px)] sm:w-[calc(33.333%-12px)] lg:w-[calc(25%-15px)] snap-start cursor-pointer group flex flex-col"
               >
                 {/* 1. Flipkart-Style Solid Grey Image Box with Rating Badge */}
                 <div className="relative w-full aspect-square bg-[#F2F3F5] rounded-2xl overflow-hidden p-3 sm:p-5 flex items-center justify-center border border-gray-200/50 shadow-xs group-hover:shadow-md transition-all duration-300">
-                  {/* Packaging Presentation Badge or Custom Label */}
-                  <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-10 flex flex-col gap-1 items-start">
-                    {product.label ? (
-                      <span className="text-[10px] sm:text-[11px] font-bold text-amber-950 bg-amber-200/95 backdrop-blur-xs px-2 py-0.5 rounded-md border border-amber-400 shadow-xs">
-                        {product.label}
+                  {/* Badges Container: Product Badge Pill & Packaging Badge */}
+                  <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-10 flex flex-col gap-1 items-start pointer-events-none">
+                    {badge && (
+                      <span
+                        className={`px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[10.5px] tracking-wide shadow-xs ${badge.bgClass}`}
+                        style={badge.style}
+                      >
+                        {badge.text}
                       </span>
-                    ) : isPicklesOrThokku ? (
-                      isBottle ? (
-                        <span className="text-[10px] sm:text-[11px] font-bold text-amber-900 bg-amber-100/95 backdrop-blur-xs px-2 py-0.5 rounded-md border border-amber-300/80 shadow-xs">
-                          Bottle
-                        </span>
-                      ) : (
-                        <span className="text-[10px] sm:text-[11px] font-bold text-orange-900 bg-orange-100/95 backdrop-blur-xs px-2 py-0.5 rounded-md border border-orange-300/80 shadow-xs">
-                          Pack
-                        </span>
-                      )
-                    ) : null}
+                    )}
+                    {isPicklesOrThokku && (
+                      <span
+                        className={`text-[9.5px] sm:text-[10px] font-bold px-2 py-0.5 rounded-md shadow-xs backdrop-blur-xs border ${
+                          isBottle
+                            ? "text-amber-900 bg-amber-100/95 border-amber-300/80"
+                            : "text-orange-900 bg-orange-100/95 border-orange-300/80"
+                        }`}
+                      >
+                        {isBottle ? "Bottle" : "Pack"}
+                      </span>
+                    )}
                   </div>
 
                   {/* Admin Quick Edit Pencil Button */}
@@ -580,16 +616,29 @@ const processAndGroupProducts = (apiProducts = [], serverCats = []) => {
   const processedProducts = apiProducts.map((p) => {
     const canonicalCat = normalizeCategory(p.category, p.name);
     // Collect all assigned categories (normalized to canonical where applicable)
-    const rawList = Array.isArray(p.categories) && p.categories.length > 0
-      ? p.categories
+    let rawList = Array.isArray(p.categories) && p.categories.length > 0
+      ? [...p.categories]
       : [p.category || canonicalCat];
-    const assignedCats = Array.from(new Set(rawList.map((c) => normalizeCategory(c, p.name))));
+
+    // Dual-category support: ensure Millet Noodles and Ragi Semiya appear in both respective categories
+    const lowerName = (p.name || "").toLowerCase();
+    if (lowerName.includes("millet noodle") || (lowerName.includes("millet") && lowerName.includes("noodle"))) {
+      if (!rawList.includes("Millet")) rawList.push("Millet");
+      if (!rawList.includes("Noodles")) rawList.push("Noodles");
+    }
+    if (lowerName.includes("ragi semiya") || lowerName.includes("ragi vermicelli") || (lowerName.includes("millet") && (lowerName.includes("semiya") || lowerName.includes("vermicelli")))) {
+      if (!rawList.includes("Millet")) rawList.push("Millet");
+      if (!rawList.includes("Semiya")) rawList.push("Semiya");
+    }
+
+    const assignedCats = Array.from(new Set(rawList.map((c) => normalizeCategory(c, p.name)).filter(Boolean)));
 
     return {
       ...p,
       category: canonicalCat,
       categories: assignedCats,
       originalCategory: p.category,
+      label: (p.label || p.badge || "").trim(),
       tamilName: p.tamilName || getTamilName(p.name, canonicalCat),
       tamilSlogan: p.tamilSlogan || getTamilSlogan(p.name, canonicalCat),
       packagingType:
@@ -766,7 +815,6 @@ const ProductRangeCarousel = () => {
       "Flour Items": "Flour Items",
       "Maida": "Maida Items",
       "Maida Items": "Maida Items",
-      "Maida": "Maida Items",
       "Rava Sooji": "Rava Sooji",
       "Pickles": "Pickles",
       "Thokku": "Thokku",
@@ -966,10 +1014,20 @@ const ProductRangeCarousel = () => {
             </button>
 
             {/* Product info bar */}
-            <div className="absolute -top-12 left-0 text-white text-sm font-medium">
-              {(zoomedImage.category === "Pickles" || zoomedImage.category === "Thokku") && isPackPresentation(zoomedImage)
-                ? zoomedImage.name.replace(/\b\d+\.?\d*\s*(g|kg|gm|grams|ml|l)\b/gi, "").replace(/\s*-\s*$/, "").replace(/\(\s*\)/, "").trim()
-                : zoomedImage.name}
+            <div className="absolute -top-12 left-0 text-white text-sm font-medium flex items-center gap-2">
+              <span>
+                {(zoomedImage.category === "Pickles" || zoomedImage.category === "Thokku") && isPackPresentation(zoomedImage)
+                  ? zoomedImage.name.replace(/\b\d+\.?\d*\s*(g|kg|gm|grams|ml|l)\b/gi, "").replace(/\s*-\s*$/, "").replace(/\(\s*\)/, "").trim()
+                  : zoomedImage.name}
+              </span>
+              {(zoomedImage.label || zoomedImage.badge) && (
+                <span
+                  className="px-2 py-0.5 rounded-full text-[11px] font-bold text-white shadow-xs"
+                  style={{ backgroundColor: zoomedImage.badgeColor || "#e8703b" }}
+                >
+                  {zoomedImage.label || zoomedImage.badge}
+                </span>
+              )}
             </div>
 
             {/* Image container */}

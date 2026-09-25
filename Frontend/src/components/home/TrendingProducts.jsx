@@ -31,7 +31,6 @@ const categoryTamilNames = {
   "spices": "பாரம்பரிய மிக்ஸ்",
   "pickles": "ஊறுகாய்",
   "Millet Products": "சிறுதானியம்",
-  "Maida": "மாவு வகைகள்",
   "Sooji": "ரவை & சூஜி",
   "MILLETS": "சிறுதானியம்",
   "puppet": "அப்பளம்",
@@ -272,11 +271,17 @@ const TrendingProducts = () => {
 
               let badge = null;
               if (isOutOfStock) {
-                badge = { text: "Out of Stock", bg: "bg-rose-600 text-white font-bold" };
-              } else if (product.label) {
-                badge = { text: product.label, bg: "bg-[#e8703b] text-white" };
+                badge = { text: "Out of Stock", bg: "bg-rose-600 text-white font-bold", style: {} };
+              } else if (product.label || product.badge) {
+                const lbl = (product.label || product.badge).trim();
+                const customColor = (product.badgeColor || "").trim();
+                if (customColor) {
+                  badge = { text: lbl, bg: "text-white font-bold", style: { backgroundColor: customColor } };
+                } else {
+                  badge = { text: lbl, bg: "bg-[#e8703b] text-white", style: {} };
+                }
               } else {
-                badge = { text: "New", bg: "bg-[#e8703b] text-white" };
+                badge = { text: "New", bg: "bg-[#e8703b] text-white", style: {} };
               }
 
               return (
@@ -293,7 +298,10 @@ const TrendingProducts = () => {
                       {/* Top-Left Badge */}
                       {badge && (
                         <div className="absolute top-2.5 left-2.5 z-10">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold tracking-wide ${badge.bg}`}>
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold tracking-wide shadow-xs ${badge.bg}`}
+                            style={badge.style}
+                          >
                             {badge.text}
                           </span>
                         </div>

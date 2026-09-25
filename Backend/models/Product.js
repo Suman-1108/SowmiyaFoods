@@ -14,6 +14,7 @@ const productSchema = new mongoose.Schema(
     lowStockThreshold: { type: Number, default: 10, min: 1 },
     inStock: { type: Boolean, default: true },
     label: { type: String, default: "" },
+    badgeColor: { type: String, default: "" },
     quote: { type: String, default: "" },
     tamilName: { type: String, default: "" },
     tamilSlogan: { type: String, default: "" },

@@ -257,6 +257,7 @@ export const createProduct = async (req, res) => {
       lowStockThreshold,
       inStock,
       label,
+      badgeColor,
       quote,
       quotes,
       tamilName,
@@ -314,6 +315,7 @@ export const createProduct = async (req, res) => {
       lowStockThreshold: parsedThreshold,
       inStock: parsedInStock,
       label: label ? String(label).trim() : "",
+      badgeColor: badgeColor ? String(badgeColor).trim() : "",
       quote: finalQuote ? String(finalQuote).trim() : "",
       tamilName: tamilName ? String(tamilName).trim() : "",
       tamilSlogan: tamilSlogan ? String(tamilSlogan).trim() : "",
@@ -350,6 +352,7 @@ export const updateProduct = async (req, res) => {
       lowStockThreshold,
       inStock,
       label,
+      badgeColor,
       quote,
       quotes,
       tamilName,
@@ -412,6 +415,10 @@ export const updateProduct = async (req, res) => {
 
     if (label !== undefined) {
       product.label = String(label).trim();
+    }
+
+    if (badgeColor !== undefined) {
+      product.badgeColor = String(badgeColor).trim();
     }
 
     const incomingQuote = quote !== undefined ? quote : quotes;

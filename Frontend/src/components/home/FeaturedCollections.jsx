@@ -29,7 +29,6 @@ const categoryTamilNames = {
   "spices": "பாரம்பரிய மிக்ஸ்",
   "pickles": "ஊறுகாய்",
   "Millet Products": "சிறுதானியம்",
-  "Maida": "மாவு வகைகள்",
   "Sooji": "ரவை & சூஜி",
   "MILLETS": "சிறுதானியம்",
   "puppet": "அப்பளம்",
@@ -301,9 +300,20 @@ const FeaturedCollections = () => {
               const tamilName = getTamilName(item.name, item.category);
               const dynamicImage = item.image || ph;
 
-              // Promotional badge logic
-              const badgeText =
-                idx % 4 === 0 ? "Featured" : idx % 3 === 0 ? "Popular" : idx % 2 === 0 ? "Special" : null;
+              // Promotional badge logic (prioritizes Out of Stock, item.label/badge, fallback)
+              let badgeText = item.label || item.badge;
+              let badgeBg = "bg-[#e8703b] text-white";
+              let badgeStyle = {};
+
+              if (isOutOfStock) {
+                badgeText = "Out of Stock";
+                badgeBg = "bg-rose-600 text-white font-bold";
+              } else if (item.badgeColor) {
+                badgeStyle = { backgroundColor: item.badgeColor };
+                badgeBg = "text-white font-bold";
+              } else if (!badgeText) {
+                badgeText = idx % 4 === 0 ? "Featured" : idx % 3 === 0 ? "Popular" : idx % 2 === 0 ? "Special" : "New";
+              }
 
               return (
                 <div
@@ -319,7 +329,10 @@ const FeaturedCollections = () => {
                       {/* Top-Left Dynamic Badge */}
                       {badgeText && (
                         <div className="absolute top-2.5 left-2.5 z-10">
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-[10.5px] font-bold tracking-wide bg-[#e8703b] text-white shadow-2xs">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] sm:text-[10.5px] font-bold tracking-wide shadow-2xs ${badgeBg}`}
+                            style={badgeStyle}
+                          >
                             {badgeText}
                           </span>
                         </div>

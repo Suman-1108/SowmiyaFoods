@@ -16,6 +16,7 @@ import {
   Languages,
   Layers,
   Star,
+  Palette,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
@@ -32,6 +33,18 @@ const LABEL_PRESETS = [
   "Pure & Organic",
   "Hot",
   "Chef's Pick",
+  "Limited Edition",
+];
+
+const BADGE_COLOR_PALETTES = [
+  { name: "Brand Orange", value: "#e8703b" },
+  { name: "Golden Amber", value: "#f59e0b" },
+  { name: "Fiery Red", value: "#dc2626" },
+  { name: "Ruby Rose", value: "#e11d48" },
+  { name: "Emerald Green", value: "#059669" },
+  { name: "Royal Purple", value: "#7c3aed" },
+  { name: "Ocean Blue", value: "#2563eb" },
+  { name: "Dark Slate", value: "#1e293b" },
 ];
 
 const DEFAULT_CATEGORIES = [
@@ -181,6 +194,7 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct, availableCatego
             : "10",
         inStock: editingProduct.inStock !== false,
         label: editingProduct.label || "",
+        badgeColor: editingProduct.badgeColor || "",
         quote: editingProduct.quote || editingProduct.quotes || "",
         tamilName: editingProduct.tamilName || "",
         tamilSlogan: editingProduct.tamilSlogan || "",
@@ -203,6 +217,7 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct, availableCatego
         lowStockThreshold: "10",
         inStock: true,
         label: "",
+        badgeColor: "",
         quote: "",
         tamilName: "",
         tamilSlogan: "",
@@ -402,6 +417,7 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct, availableCatego
         lowStockThreshold: isNaN(thresholdNum) ? 10 : thresholdNum,
         inStock: Boolean(formData.inStock),
         label: (formData.label || "").trim(),
+        badgeColor: (formData.badgeColor || "").trim(),
         quote: (formData.quote || "").trim(),
         tamilName: (formData.tamilName || "").trim(),
         tamilSlogan: (formData.tamilSlogan || "").trim(),
@@ -784,17 +800,18 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct, availableCatego
                           key={cat}
                           className={`inline-flex items-center gap-1.5 pl-2.5 pr-1 py-1 rounded-lg text-xs font-semibold border transition ${
                             isSelected
-                              ? "bg-orange-50 border-orange-200 text-[#e8703b]"
+                              ? "bg-orange-50 border-orange-300 text-[#e8703b] shadow-2xs font-bold"
                               : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
                           }`}
                         >
                           <button
                             type="button"
-                            onClick={() => setFormData({ ...formData, category: cat })}
-                            className="cursor-pointer hover:underline"
-                            title="Select this category"
+                            onClick={() => toggleCategory(cat)}
+                            className="cursor-pointer hover:underline inline-flex items-center gap-1"
+                            title={isSelected ? "Selected (Click to remove)" : "Click to add to product"}
                           >
-                            {cat}
+                            <span>{isSelected ? "✓" : "+"}</span>
+                            <span>{cat}</span>
                           </button>
                           <button
                             type="button"
@@ -828,9 +845,12 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct, availableCatego
                 </div>
                 {/* Live Badge Preview */}
                 {formData.label && (
-                  <div className="flex items-center gap-1.5 bg-white/80 px-2.5 py-1 rounded-xl border border-amber-200/80 shadow-2xs">
+                  <div className="flex items-center gap-1.5 bg-white/90 px-3 py-1.5 rounded-xl border border-amber-200/80 shadow-2xs">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Badge:</span>
-                    <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#e8703b] text-white shadow-xs">
+                    <span
+                      className="px-2.5 py-0.5 rounded-full text-xs font-bold text-white shadow-xs transition-all"
+                      style={{ backgroundColor: formData.badgeColor || "#e8703b" }}
+                    >
                       {formData.label}
                     </span>
                   </div>
@@ -889,6 +909,69 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct, availableCatego
                 <span className="text-[10.5px] text-slate-400 mt-1 block">
                   Displayed on product cards across the store and at top of product detail page
                 </span>
+
+                {/* Badge Color Customization Section */}
+                <div className="mt-3 pt-3 border-t border-amber-200/60">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <Palette className="w-3.5 h-3.5 text-[#e8703b]" />
+                      <span>Customize Badge Color</span>
+                    </label>
+                    <span className="text-[10.5px] text-slate-400 font-medium">Select theme or custom color</span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                    {BADGE_COLOR_PALETTES.map((palette) => {
+                      const isSelected = (formData.badgeColor || "#e8703b").toLowerCase() === palette.value.toLowerCase();
+                      return (
+                        <button
+                          key={palette.value}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, badgeColor: palette.value })}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                            isSelected
+                              ? "border-slate-800 shadow-xs ring-2 ring-orange-400/50 text-slate-900 bg-white font-bold"
+                              : "border-slate-200 hover:border-slate-300 text-slate-600 bg-white/70"
+                          }`}
+                        >
+                          <span
+                            className="w-3.5 h-3.5 rounded-full shrink-0 shadow-2xs"
+                            style={{ backgroundColor: palette.value }}
+                          />
+                          <span>{palette.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Custom Color Input */}
+                  <div className="flex items-center gap-2 mt-2 bg-white/70 p-2 rounded-xl border border-slate-200">
+                    <label className="text-[11px] font-bold text-slate-600">Custom Color:</label>
+                    <input
+                      type="color"
+                      value={formData.badgeColor || "#e8703b"}
+                      onChange={(e) => setFormData({ ...formData, badgeColor: e.target.value })}
+                      className="w-7 h-7 p-0 border border-slate-300 rounded-lg cursor-pointer bg-white"
+                      title="Choose custom badge color"
+                    />
+                    <input
+                      type="text"
+                      value={formData.badgeColor || ""}
+                      onChange={(e) => setFormData({ ...formData, badgeColor: e.target.value })}
+                      placeholder="#e8703b"
+                      className="w-24 px-2 py-1 text-xs font-mono bg-white border border-slate-200 rounded-lg uppercase text-slate-800"
+                    />
+                    {formData.badgeColor && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, badgeColor: "" })}
+                        className="text-[11px] text-slate-400 hover:text-slate-600 underline cursor-pointer ml-auto"
+                      >
+                        Reset Default
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Quotes / Promotional Tagline */}

@@ -23,49 +23,55 @@ const CustomMetaScript = () => {
       try {
         ensureFbqStub();
         const scriptContent = await getCustomMetaScript();
-        if (!scriptContent || !mounted) return;
+        if (!scriptContent || !mounted || typeof scriptContent !== "string") return;
 
-        // Parse the script content to handle both inline and external scripts
+        const trimmed = scriptContent.trim();
+        if (!trimmed) return;
+
+        // Parse HTML to extract scripts and noscript tags safely
         const parser = new DOMParser();
-        const doc = parser.parseFromString(scriptContent, "text/html");
+        const doc = parser.parseFromString(trimmed, "text/html");
         const scripts = doc.querySelectorAll("script");
 
         if (scripts.length > 0) {
           scripts.forEach((scriptElement) => {
-            const script = document.createElement("script");
-
-            // Copy all attributes (like src, async, defer, etc.)
-            Array.from(scriptElement.attributes).forEach((attr) => {
-              script.setAttribute(attr.name, attr.value);
-            });
-
-            // If it's an inline script (no src), wrap execution safely
-            if (!scriptElement.src && scriptElement.innerHTML) {
-              script.textContent = `
+            if (scriptElement.src) {
+              const script = document.createElement("script");
+              Array.from(scriptElement.attributes).forEach((attr) => {
+                script.setAttribute(attr.name, attr.value);
+              });
+              script.onerror = (err) => console.warn("Custom Meta Script external load error:", err);
+              document.head.appendChild(script);
+            } else {
+              const code = scriptElement.textContent || scriptElement.innerText || "";
+              if (code.trim()) {
                 try {
-                  ${scriptElement.innerHTML}
+                  // Execute safely via Function constructor so syntax errors are caught cleanly
+                  const runScript = new Function(code);
+                  runScript();
                 } catch (err) {
                   console.warn("Custom Meta Script execution error:", err);
                 }
-              `;
+              }
             }
-
-            document.head.appendChild(script);
           });
         } else {
-          // If no script tags were found, treat the entire content as inline script
-          const script = document.createElement("script");
-          script.textContent = `
-            try {
-              ${scriptContent}
-            } catch (err) {
-              console.warn("Custom Meta Script execution error:", err);
-            }
-          `;
-          document.head.appendChild(script);
+          // If no <script> tags found, check if it's pure HTML (e.g. <noscript> or comments)
+          if (trimmed.startsWith("<") && trimmed.endsWith(">")) {
+            // Pure markup without script tags, do not execute as JS
+            return;
+          }
+
+          // Otherwise attempt safe execution as raw JavaScript
+          try {
+            const runScript = new Function(trimmed);
+            runScript();
+          } catch (err) {
+            console.warn("Custom Meta Script execution error:", err);
+          }
         }
-      } catch (_) {
-        // Silently ignore if custom script is not configured or optional
+      } catch (err) {
+        console.warn("Custom Meta Script load error:", err);
       }
     };
 
@@ -80,3 +86,4 @@ const CustomMetaScript = () => {
 };
 
 export default CustomMetaScript;
+
