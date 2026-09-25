@@ -542,11 +542,65 @@ const CategoryCarouselSection = ({
   );
 };
 
+// =========================================================================
+// Category Sub-Ordering Helpers as requested by client
+// =========================================================================
+const getInstantProductRank = (name = "") => {
+  const n = name.toLowerCase();
+  if (n.includes("parotta")) return 1;
+  if (n.includes("murukku")) return 2;
+  if (n.includes("bajji") || n.includes("bonda")) return 3;
+  if (n.includes("adai") || n.includes("dosa")) return 4;
+  if (n.includes("idiappa") || n.includes("idiappam")) return 5;
+  if (n.includes("ulundhankali") || n.includes("ulunthankali")) return 6;
+  if (n.includes("venthayam") || n.includes("ventheyam")) return 7;
+  if (n.includes("ellu") && n.includes("podi")) return 8;
+  if ((n.includes("idli") && n.includes("podi")) || n.includes("idly podi")) return 9;
+  if (n.includes("parupu") && n.includes("podi")) return 10;
+  if (n.includes("puliyotharai") || n.includes("puliyodharai")) return 11;
+  return 99;
+};
+
+const getFlourItemRank = (name = "") => {
+  const n = name.toLowerCase();
+  if (n.includes("gram flour") || n.includes("kadalai")) return 1;
+  if (n.includes("rice flour") || n.includes("arisi maavu")) return 2;
+  if (n.includes("parotta maida")) return 5;
+  if (/\batta\b|chakki|wheat/i.test(n)) return 3;
+  if (/\bmaida\b/i.test(n)) return 4;
+  if (n.includes("corn flour") || n.includes("corn")) return 6;
+  if (n.includes("ragi")) return 7;
+  return 8;
+};
+
+const getPickleRank = (name = "") => {
+  const n = name.toLowerCase();
+  const isPack = n.includes("pack") || n.includes("pouch");
+  if (n.includes("lemon") || n.includes("elamichai") || n.includes("lime")) return isPack ? 2 : 1;
+  if (n.includes("citron") || n.includes("narthangai")) return isPack ? 4 : 3;
+  if (n.includes("sweet mango") || n.includes("sweet maangai")) return isPack ? 6 : 5;
+  if (n.includes("cut mango") || (n.includes("mango") && !n.includes("sweet"))) return isPack ? 8 : 7;
+  if (n.includes("garlic") || n.includes("poondu")) return isPack ? 10 : 9;
+  return 99;
+};
+
+const getThokkuRank = (name = "") => {
+  const n = name.toLowerCase();
+  const isPack = n.includes("pack") || n.includes("pouch");
+  if (n.includes("tomato") || n.includes("thakkali")) return isPack ? 2 : 1;
+  if (n.includes("garlic") || n.includes("poondu")) return isPack ? 4 : 3;
+  if (n.includes("onion") || n.includes("vengayam")) return isPack ? 6 : 5;
+  return 99;
+};
+
 // Helper to process raw products and group by category
 const processAndGroupProducts = (apiProducts = [], serverCats = []) => {
-  const uniqueCats = Array.from(
-    new Set([...CANONICAL_CATEGORIES, ...serverCats, ...apiProducts.map(p => p.category).filter(Boolean)])
-  );
+  // 1. Overall Category Order: strictly enforce CANONICAL_CATEGORIES first
+  const uniqueCats = [
+    ...CANONICAL_CATEGORIES,
+    ...serverCats.filter((c) => !CANONICAL_CATEGORIES.includes(c)),
+    ...apiProducts.map((p) => p.category).filter((c) => c && !CANONICAL_CATEGORIES.includes(c)),
+  ].filter((cat, idx, arr) => arr.indexOf(cat) === idx);
 
   const processedProducts = apiProducts.map((p) => {
     const canonicalCat = normalizeCategory(p.category, p.name);
@@ -573,17 +627,46 @@ const processAndGroupProducts = (apiProducts = [], serverCats = []) => {
     grouped[cat].push(product);
   });
 
-  ["Pickles", "Thokku"].forEach((catKey) => {
-    if (grouped[catKey]) {
-      grouped[catKey].sort((a, b) => {
-        const aIsBottle = isBottlePresentation(a);
-        const bIsBottle = isBottlePresentation(b);
-        if (aIsBottle && !bIsBottle) return -1;
-        if (!aIsBottle && bIsBottle) return 1;
-        return 0;
-      });
-    }
-  });
+  // 2. Product Sub-Ordering Within Categories
+  // Instant Products
+  if (grouped["Instant Products"]) {
+    grouped["Instant Products"].sort((a, b) => {
+      const rankA = getInstantProductRank(a.name);
+      const rankB = getInstantProductRank(b.name);
+      if (rankA !== rankB) return rankA - rankB;
+      return (a.price || 0) - (b.price || 0);
+    });
+  }
+
+  // Flour Items
+  if (grouped["Flour Items"]) {
+    grouped["Flour Items"].sort((a, b) => {
+      const rankA = getFlourItemRank(a.name);
+      const rankB = getFlourItemRank(b.name);
+      if (rankA !== rankB) return rankA - rankB;
+      return (a.price || 0) - (b.price || 0);
+    });
+  }
+
+  // Pickles
+  if (grouped["Pickles"]) {
+    grouped["Pickles"].sort((a, b) => {
+      const rankA = getPickleRank(a.name);
+      const rankB = getPickleRank(b.name);
+      if (rankA !== rankB) return rankA - rankB;
+      return (a.price || 0) - (b.price || 0);
+    });
+  }
+
+  // Thokku
+  if (grouped["Thokku"]) {
+    grouped["Thokku"].sort((a, b) => {
+      const rankA = getThokkuRank(a.name);
+      const rankB = getThokkuRank(b.name);
+      if (rankA !== rankB) return rankA - rankB;
+      return (a.price || 0) - (b.price || 0);
+    });
+  }
 
   return { uniqueCats, processedProducts, grouped };
 };
