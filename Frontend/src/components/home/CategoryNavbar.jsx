@@ -223,7 +223,7 @@ const CategoryNavbar = () => {
           <button
             onClick={() => handleScroll("left")}
             aria-label="Scroll Left"
-            className="hidden md:flex absolute left-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 items-center justify-center bg-white/95 hover:bg-white text-gray-700 hover:text-[#E05A1B] rounded-full shadow-md border border-gray-200 transition-all duration-200 cursor-pointer"
+            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 w-7 h-7 items-center justify-center bg-white/95 hover:bg-white text-gray-700 hover:text-[#E05A1B] rounded-full shadow-md border border-gray-200 transition-all duration-200 cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -234,7 +234,7 @@ const CategoryNavbar = () => {
           <button
             onClick={() => handleScroll("right")}
             aria-label="Scroll Right"
-            className="hidden md:flex absolute right-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 items-center justify-center bg-white/95 hover:bg-white text-gray-700 hover:text-[#E05A1B] rounded-full shadow-md border border-gray-200 transition-all duration-200 cursor-pointer"
+            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20 w-7 h-7 items-center justify-center bg-white/95 hover:bg-white text-gray-700 hover:text-[#E05A1B] rounded-full shadow-md border border-gray-200 transition-all duration-200 cursor-pointer"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -244,7 +244,7 @@ const CategoryNavbar = () => {
         <div
           ref={scrollRef}
           onScroll={checkScroll}
-          className="flex items-center justify-start md:justify-center gap-2 sm:gap-4 md:gap-6 overflow-x-auto py-2.5 px-2 scroll-smooth scrollbar-none"
+          className="flex items-center justify-start gap-1.5 sm:gap-3 md:gap-4 lg:gap-5 overflow-x-auto py-2.5 px-3 sm:px-6 md:px-8 scroll-smooth scrollbar-none"
           style={{
             scrollbarWidth: "none",
             msOverflowStyle: "none",
