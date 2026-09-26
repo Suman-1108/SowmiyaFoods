@@ -12,7 +12,7 @@ import banner1Mobile from "../../assets/banner1-mobile.png";
 import banner2Mobile from "../../assets/banner2-mobile.png";
 import banner3Mobile from "../../assets/banner3-mobile.png";
 import banner4Mobile from "../../assets/banner4-mobile.png";
-import banner5Mobile from "../../assets/banner5-mobile.jpeg";
+import banner5Mobile from "../../assets/banner5-mobile.png";
 
 const desktopBanners = [banner5, banner2, banner3, banner1];
 const mobileBanners = [banner1Mobile, banner2Mobile, banner3Mobile, banner5Mobile];
