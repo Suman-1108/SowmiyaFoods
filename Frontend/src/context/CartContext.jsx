@@ -35,6 +35,11 @@ export const CartProvider = ({ children }) => {
           res.data.products?.map((item) => ({
             _id: item.productId?._id,
             name: item.productId?.name,
+            category: item.productId?.category,
+            tamilName: item.productId?.tamilName || item.productId?.tamil_name,
+            quote: item.productId?.quote,
+            slogan: item.productId?.slogan,
+            tamilSlogan: item.productId?.tamilSlogan,
             price: item.productId?.price,
             image: item.productId?.image || "/placeholder.png",
             quantity: item.quantity,
@@ -82,6 +87,11 @@ export const CartProvider = ({ children }) => {
         guestCart.products.push({
           _id: product._id,
           name: product.name,
+          category: product.category,
+          tamilName: product.tamilName || product.tamil_name,
+          quote: product.quote,
+          slogan: product.slogan,
+          tamilSlogan: product.tamilSlogan,
           price: product.price,
           image: product.image || "/placeholder.png",
           quantity,

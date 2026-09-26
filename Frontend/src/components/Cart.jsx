@@ -6,6 +6,7 @@ import Footer from "./Footer";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
+import { getTamilName, getTamilSlogan } from "../utils/productTamil";
 
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity, getTotal, clearCart } =
@@ -106,11 +107,23 @@ const Cart = () => {
                         <img
                           src={item.image || "/placeholder.png"}
                           alt={item.name}
-                          className="w-16 h-20 object-contain rounded"
+                          className="w-16 h-20 object-contain rounded flex-shrink-0"
                         />
-                        <span className="font-medium text-gray-800">
-                          {item.name}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-gray-900 leading-snug">
+                            {item.name}
+                          </span>
+                          {(item.tamilName || getTamilName(item.name, item.category)) && (
+                            <span className="text-xs text-amber-800 font-medium mt-0.5">
+                              {item.tamilName || getTamilName(item.name, item.category)}
+                            </span>
+                          )}
+                          {(item.quote || item.slogan || item.tamilSlogan || getTamilSlogan(item.name, item.category)) && (
+                            <span className="text-[11px] text-amber-700/80 italic mt-0.5">
+                              &ldquo;{item.quote || item.slogan || item.tamilSlogan || getTamilSlogan(item.name, item.category)}&rdquo;
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-2 px-2 font-semibold">₹{item.price}</td>
                       <td className="py-2 px-2">

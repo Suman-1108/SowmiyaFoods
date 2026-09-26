@@ -56,8 +56,8 @@ export const getProductSubOrderRank = (category = "", productName = "", price = 
 
   // --- 3. NOODLES ---
   if (cat.includes("noodle")) {
-    if (n.includes("raman") || (n.includes("ramar") && n.includes("noodles") && !n.includes("soft") && !n.includes("regular") && !n.includes("millet"))) return 1;
-    if (n.includes("ramar soft") || n.includes("soft")) return 2;
+    if (n.includes("ramar soft") || n.includes("soft")) return 1;
+    if (n.includes("raman") || (n.includes("ramar") && n.includes("noodles") && !n.includes("soft") && !n.includes("regular") && !n.includes("millet"))) return 2;
     if ((n.includes("regular") || !n.includes("millet")) && n.includes("100g")) return 3;
     if ((n.includes("regular") || !n.includes("millet")) && (n.includes("200g") || !n.includes("100g"))) return 4;
     if (n.includes("millet noodle") || (n.includes("millet") && n.includes("200g"))) return 5;
