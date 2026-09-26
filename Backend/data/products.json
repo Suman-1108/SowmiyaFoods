@@ -993,7 +993,8 @@
     "name": "Puliyotharai Mix 100g",
     "category": "Instant Products",
     "categories": [
-      "Instant Products"
+      "Instant Products",
+      "Traditional Mix"
     ],
     "price": 30,
     "mrp": 30,
@@ -1221,8 +1222,9 @@
   },
   {
     "name": "Puliyotharai Mix - 200g",
-    "category": "Instant Products",
+    "category": "Traditional Mix",
     "categories": [
+      "Traditional Mix",
       "Instant Products"
     ],
     "price": 80,
