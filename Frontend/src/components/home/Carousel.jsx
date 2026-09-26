@@ -4,6 +4,7 @@ import banner1 from "../../assets/banner1.png";
 import banner2 from "../../assets/banner2.png";
 import banner3 from "../../assets/banner3.png";
 import banner4 from "../../assets/banner4.png";
+import banner5 from "../../assets/banner5.jpeg"
 import banner6 from "../../assets/banner6.png";
 
 
@@ -11,9 +12,9 @@ import banner1Mobile from "../../assets/banner1-mobile.png";
 import banner2Mobile from "../../assets/banner2-mobile.png";
 import banner3Mobile from "../../assets/banner3-mobile.png";
 import banner4Mobile from "../../assets/banner4-mobile.png";
-import banner5Mobile from "../../assets/banner5-mobile.png";
+import banner5Mobile from "../../assets/banner5-mobile.jpeg";
 
-const desktopBanners = [banner6, banner2, banner3, banner1];
+const desktopBanners = [banner5, banner2, banner3, banner1];
 const mobileBanners = [banner1Mobile, banner2Mobile, banner3Mobile, banner5Mobile];
 
 const Carousel = () => {

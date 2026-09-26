@@ -20,14 +20,15 @@
   },
   {
     "name": "Ragi Flour 500g",
-    "category": "Flour Items",
+    "category": "Millet",
     "categories": [
-      "Flour Items"
+      "Flour Items",
+      "Millet"
     ],
     "price": 35,
     "mrp": 50,
     "description": "Nutritious finger millet flour.\nGreat for healthy recipes.",
-    "image": "https://res.cloudinary.com/qnbhfeck/image/upload/v1790336465/sowmiyafoods/jmw7odkweqgldlpnyoua.png",
+    "image": "https://res.cloudinary.com/qnbhfeck/image/upload/v1790364631/sowmiyafoods/hq3ct28kmhji1gjh6uwc.png",
     "slug": "ragi-flour-500g",
     "stock": 50,
     "lowStockThreshold": 10,
@@ -106,25 +107,6 @@
     "image": "https://res.cloudinary.com/qnbhfeck/image/upload/v1790246403/sowmiyafoods/bw9bbkwt83fwafg29yaz.jpg",
     "slug": "sivappu-kavuni-puttu-flour-250g",
     "stock": 250,
-    "lowStockThreshold": 10,
-    "inStock": true,
-    "label": "",
-    "quote": "",
-    "tamilName": "",
-    "tamilSlogan": ""
-  },
-  {
-    "name": "Millet Puttu Podi – 250g",
-    "category": "Millet",
-    "categories": [
-      "Millet"
-    ],
-    "price": 56,
-    "mrp": 65,
-    "description": "Ramar Millet Puttu Podi is a traditional South Indian puttu mix made for preparing soft, wholesome and flavourful puttu at home. The millet-based flour offers a convenient way to enjoy a traditional steamed breakfast with an authentic taste and texture.",
-    "image": "https://res.cloudinary.com/qnbhfeck/image/upload/v1790257908/sowmiyafoods/zzvm9thcn1v44xn7ms11.jpg",
-    "slug": "millet-puttu-podi-250g-1",
-    "stock": 25,
     "lowStockThreshold": 10,
     "inStock": true,
     "label": "",
@@ -241,7 +223,7 @@
     "stock": 50,
     "lowStockThreshold": 10,
     "inStock": true,
-    "label": "",
+    "label": "White Packets Only",
     "quote": "",
     "tamilName": "",
     "tamilSlogan": ""
@@ -293,7 +275,7 @@
     "price": 25,
     "mrp": 35,
     "description": "Soft and healthy vermicelli.\nPerfect for quick breakfast meals.",
-    "image": "https://res.cloudinary.com/dbuyr00w6/image/upload/v1760272316/vermicelli_oekzvx.png",
+    "image": "https://res.cloudinary.com/qnbhfeck/image/upload/v1790372609/sowmiyafoods/isjcchca6osskwjzsx3i.png",
     "slug": "regular-semiya-200g",
     "stock": 50,
     "lowStockThreshold": 10,
@@ -304,7 +286,7 @@
     "tamilSlogan": ""
   },
   {
-    "name": "Semia – 500g",
+    "name": "Regular Semia – 500g",
     "category": "Semiya",
     "categories": [
       "Semiya"
@@ -312,8 +294,8 @@
     "price": 58,
     "mrp": 80,
     "description": "Roasted long vermicelli.\nIdeal for savory upma and sweet payasam.",
-    "image": "https://res.cloudinary.com/dbuyr00w6/image/upload/v1760272316/vermicelli_oekzvx.png",
-    "slug": "semia-500g",
+    "image": "https://res.cloudinary.com/qnbhfeck/image/upload/v1790372664/sowmiyafoods/hz4nyp8se7rqnib5vewf.png",
+    "slug": "regular-semia-500g",
     "stock": 50,
     "lowStockThreshold": 10,
     "inStock": true,
@@ -514,14 +496,15 @@
   },
   {
     "name": "Bajji Flour 200g",
-    "category": "Instant Products",
+    "category": "Flour Items",
     "categories": [
-      "Instant Products"
+      "Instant Products",
+      "Flour Items"
     ],
     "price": 30,
     "mrp": 45,
     "description": "Special bajji flour blend.\nPerfect for deep-fried evening snacks.",
-    "image": "https://res.cloudinary.com/dbuyr00w6/image/upload/v1760266659/WhatsApp_Image_2025-10-11_at_18.54.22_39290d95_uqyz0z.jpg",
+    "image": "https://res.cloudinary.com/qnbhfeck/image/upload/v1790408361/sowmiyafoods/cowumaimhot3fm5trd7k.png",
     "slug": "bajji-flour-200g",
     "stock": 50,
     "lowStockThreshold": 10,
@@ -646,25 +629,6 @@
     "tamilSlogan": ""
   },
   {
-    "name": "Ramar Kozhukattai Flour – 500g",
-    "category": "Flour Items",
-    "categories": [
-      "Flour Items"
-    ],
-    "price": 92,
-    "mrp": 100,
-    "description": "Ramar Kozhukattai Flour is a convenient flour specially prepared for making traditional South Indian kozhukattai. It can be used to prepare soft, smooth and delicious steamed kozhukattai with your choice of sweet or savoury filling. A convenient option for preparing authentic traditional dishes at home.",
-    "image": "https://res.cloudinary.com/qnbhfeck/image/upload/v1790257585/sowmiyafoods/a05izrqkdhpwwbimcpdw.jpg",
-    "slug": "ramar-kozhukattai-flour-500g",
-    "stock": 25,
-    "lowStockThreshold": 10,
-    "inStock": true,
-    "label": "",
-    "quote": "",
-    "tamilName": "",
-    "tamilSlogan": ""
-  },
-  {
     "name": "Roasted Sooji 250g",
     "category": "Rava Sooji",
     "categories": [
@@ -673,7 +637,7 @@
     "price": 20,
     "mrp": 30,
     "description": "Premium roasted sooji.\nIdeal for idli, upma and kesari.",
-    "image": "https://res.cloudinary.com/dbuyr00w6/image/upload/v1760276417/rava-org_yvgm7r.png",
+    "image": "https://res.cloudinary.com/qnbhfeck/image/upload/v1790373731/sowmiyafoods/qh2o0hnm1cqzyrwerrik.png",
     "slug": "roasted-sooji-250g",
     "stock": 50,
     "lowStockThreshold": 10,
@@ -692,7 +656,7 @@
     "price": 36,
     "mrp": 50,
     "description": "Premium roasted sooji.\nIdeal for idli, upma and kesari.",
-    "image": "https://res.cloudinary.com/qnbhfeck/image/upload/v1790333520/sowmiyafoods/afq2mgbz9u9lytyx7dfq.jpg",
+    "image": "https://res.cloudinary.com/qnbhfeck/image/upload/v1790373784/sowmiyafoods/arfzgm5gpfyvu8i3ms34.png",
     "slug": "roasted-sooji-500g",
     "stock": 50,
     "lowStockThreshold": 10,
@@ -711,7 +675,7 @@
     "price": 71,
     "mrp": 95,
     "description": "Premium roasted sooji value pack.",
-    "image": "https://res.cloudinary.com/dbuyr00w6/image/upload/v1760276417/rava-org_yvgm7r.png",
+    "image": "https://res.cloudinary.com/qnbhfeck/image/upload/v1790373812/sowmiyafoods/c26a1hsrlp3zwx2hhxsa.png",
     "slug": "roasted-sooji-1kg",
     "stock": 50,
     "lowStockThreshold": 10,
@@ -1067,7 +1031,8 @@
     "name": "Vatha Kuzhambu –  (Pack)",
     "category": "Traditional Mix",
     "categories": [
-      "Traditional Mix"
+      "Traditional Mix",
+      "Instant Products"
     ],
     "price": 30,
     "mrp": 30,
@@ -1086,7 +1051,8 @@
     "name": "Vatha Kuzhambu – 200g",
     "category": "Traditional Mix",
     "categories": [
-      "Traditional Mix"
+      "Traditional Mix",
+      "Instant Products"
     ],
     "price": 80,
     "mrp": 100,
@@ -1305,7 +1271,7 @@
     "stock": 25,
     "lowStockThreshold": 10,
     "inStock": true,
-    "label": "",
+    "label": "White Packets only",
     "quote": "",
     "tamilName": "",
     "tamilSlogan": ""
@@ -1324,9 +1290,29 @@
     "stock": 25,
     "lowStockThreshold": 10,
     "inStock": true,
-    "label": "",
+    "label": "White Packets only",
     "quote": "",
     "tamilName": "",
     "tamilSlogan": ""
+  },
+  {
+    "name": "Sivappu Kavuni Idiyappam Flour – 500g",
+    "category": "Millet",
+    "categories": [
+      "Millet",
+      "Flour Items"
+    ],
+    "price": 92,
+    "mrp": 100,
+    "description": "Ramar Sivappu Kavuni Idiyappam Flour is prepared from premium-quality Sivappu Kavuni rice, a traditional red rice variety. It is specially prepared for making soft, tasty and traditional idiyappam at home. The flour provides a convenient way to enjoy the distinctive taste and natural goodness of red rice in a classic South Indian breakfast.",
+    "image": "https://res.cloudinary.com/qnbhfeck/image/upload/v1790363369/sowmiyafoods/t5yxmvmfsuvc5mlxik13.png",
+    "slug": "sivappu-kavuni-idiyappam-flour-500g",
+    "stock": 25,
+    "lowStockThreshold": 10,
+    "inStock": true,
+    "label": "",
+    "quote": "",
+    "tamilName": "சிவப்பு கவுனி இடியாப்பம்",
+    "tamilSlogan": "“தலைமுறை மாறினாலும், சுவை மாறாது!”"
   }
 ]
